@@ -12,7 +12,7 @@ export default function LandingPage({ setActivePage }) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/20 blur-[120px] rounded-full pointer-events-none"></div>
 
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-mono text-indigo-300 mb-6 shadow-inner">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Infosys Springboard 8-Week Internship Project
+          <Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Next-Generation Candidate Assessment Platform
         </div>
 
         <h1 className="text-4xl sm:text-6xl font-extrabold font-display tracking-tight text-white leading-tight">
@@ -63,7 +63,7 @@ export default function LandingPage({ setActivePage }) {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-2xl sm:text-3xl font-bold font-display text-white">System Architecture & Modules</h2>
-          <p className="text-slate-400 text-sm mt-2">Built following Infosys Springboard 8-Week Implementation Roadmap</p>
+          <p className="text-slate-400 text-sm mt-2">Built for Automated Candidate Interview Preparation & Assessment</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -124,7 +124,7 @@ export default function LandingPage({ setActivePage }) {
         <div className="glass-card p-10 rounded-3xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-950 text-center space-y-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[80px] pointer-events-none"></div>
           
-          <h2 className="text-3xl font-bold text-white">Ready for your Infosys Mock Assessment?</h2>
+          <h2 className="text-3xl font-bold text-white">Ready for your AI Mock Assessment?</h2>
           <p className="text-slate-300 text-sm max-w-xl mx-auto">
             Experience the complete end-to-end workflow: Upload your resume, take a simulated technical interview, and inspect your AI evaluation report.
           </p>

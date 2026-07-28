@@ -3,13 +3,13 @@ from typing import List, Optional, Any
 from datetime import datetime
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: str
     full_name: str
     password: str
     role: Optional[str] = "candidate"
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class UserResponse(BaseModel):

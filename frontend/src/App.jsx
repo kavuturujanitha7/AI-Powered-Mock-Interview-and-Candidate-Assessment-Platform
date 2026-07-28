@@ -61,8 +61,8 @@ export default function App() {
       {/* FOOTER */}
       <footer className="border-t border-slate-900 bg-slate-950/80 py-6 text-center text-xs text-slate-500 font-mono">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>SmartHire AI • Infosys Springboard 8-Week Internship Project</span>
-          <span className="text-slate-400">Target Repo: springboardmentor441p-coderr</span>
+          <span>SmartHire AI • AI-Powered Candidate Assessment Platform</span>
+          <span className="text-slate-400">Target Repo: kavuturujanitha7</span>
         </div>
       </footer>
 

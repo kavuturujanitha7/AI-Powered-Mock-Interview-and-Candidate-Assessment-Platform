@@ -104,7 +104,7 @@ export default function CandidateDashboard({ setActivePage, setSelectedSessionId
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-lg font-bold text-white">Skill-Wise Assessment Metrics</h2>
-              <p className="text-xs text-slate-400">Based on Infosys 4-Factor Assessment Rubric</p>
+              <p className="text-xs text-slate-400">Based on SmartHire 4-Factor Assessment Rubric</p>
             </div>
             <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">
               Rubric Verified

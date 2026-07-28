@@ -30,7 +30,7 @@ export default function Navbar({ activePage, setActivePage }) {
               <span className="text-xl font-bold font-display tracking-tight text-white flex items-center gap-1.5">
                 SmartHire <span className="text-gradient">AI</span>
               </span>
-              <span className="text-[10px] text-slate-400 block tracking-wide font-mono uppercase">Infosys Springboard Project</span>
+              <span className="text-[10px] text-slate-400 block tracking-wide font-mono uppercase">AI Mock Interview Platform</span>
             </div>
           </div>
 

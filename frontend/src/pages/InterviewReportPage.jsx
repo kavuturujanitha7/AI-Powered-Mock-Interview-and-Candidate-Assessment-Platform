@@ -67,7 +67,7 @@ export default function InterviewReportPage({ finalReport, setActivePage }) {
           <h1 className="text-xl font-bold font-display text-white flex items-center gap-2">
             AI Assessment Report <span className="text-gradient">#Session-{report.session_id}</span>
           </h1>
-          <p className="text-xs text-slate-400">Infosys 4-Factor Rubric Evaluation & Speech/Vision Telemetry</p>
+          <p className="text-xs text-slate-400">4-Factor Rubric Evaluation & Speech/Vision Telemetry</p>
         </div>
 
         <div className="flex items-center gap-3">

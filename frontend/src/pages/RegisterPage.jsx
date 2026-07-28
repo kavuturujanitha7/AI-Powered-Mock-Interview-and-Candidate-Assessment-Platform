@@ -23,7 +23,7 @@ export default function RegisterPage({ setActivePage }) {
             <Sparkles className="w-6 h-6" />
           </div>
           <h2 className="text-2xl font-bold font-display text-white">Create Account</h2>
-          <p className="text-xs text-slate-400">Join SmartHire AI - Infosys Internship Assessment System</p>
+          <p className="text-xs text-slate-400">Join SmartHire AI - Candidate Assessment System</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
