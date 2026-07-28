@@ -143,7 +143,8 @@ export async function startInterviewSession(category, difficulty, domain, num_qu
       difficulty,
       domain,
       skill_focus: "System Design & Async",
-      question_text: `Explain how you would design a scalable backend for a ${domain} application handling asynchronous events.`
+      question_text: `Explain how you would design a scalable backend for a ${domain} application handling asynchronous events.`,
+      sample_answer: "I would use a decoupled microservices architecture with a FastAPI or Node.js gateway, an asynchronous message queue like Redis or RabbitMQ for event distribution, and scalable worker instances to handle heavy background processing."
     },
     {
       id: 2,
@@ -151,7 +152,8 @@ export async function startInterviewSession(category, difficulty, domain, num_qu
       difficulty,
       domain,
       skill_focus: "Data Structures & API Security",
-      question_text: "What are JWT access tokens, how do they differ from session cookies, and how do you prevent token theft?"
+      question_text: "What are JWT access tokens, how do they differ from session cookies, and how do you prevent token theft?",
+      sample_answer: "JWT tokens are stateless, digitally signed JSON objects sent in HTTP Authorization headers. Unlike session cookies, servers don't need to store session IDs in memory. Theft is prevented using short expiration times, HTTPS TLS encryption, and storing tokens securely."
     },
     {
       id: 3,
@@ -159,7 +161,8 @@ export async function startInterviewSession(category, difficulty, domain, num_qu
       difficulty,
       domain,
       skill_focus: "Problem Solving & Conflict Resolution",
-      question_text: "Describe a situation where a technical deployment failed in production. How did you diagnose and resolve it?"
+      question_text: "Describe a situation where a technical deployment failed in production. How did you diagnose and resolve it?",
+      sample_answer: "I diagnosed the issue by inspecting server logs and error stack traces, identified a database pool connection leak, applied a hotfix patch to close unhandled connections, and restored system operations with zero data loss within 15 minutes."
     },
     {
       id: 4,
@@ -167,7 +170,8 @@ export async function startInterviewSession(category, difficulty, domain, num_qu
       difficulty,
       domain,
       skill_focus: "Code Performance",
-      question_text: "How do you identify and fix database query N+1 problems in web applications?"
+      question_text: "How do you identify and fix database query N+1 problems in web applications?",
+      sample_answer: "N+1 problems occur when a query fetches parent items and executes separate subqueries for each child item. I identify them using query profilers and fix them using eager loading (joinedload in SQLAlchemy or select_related in Django)."
     },
     {
       id: 5,
@@ -175,7 +179,8 @@ export async function startInterviewSession(category, difficulty, domain, num_qu
       difficulty,
       domain,
       skill_focus: "Professional Discipline",
-      question_text: "Where do you see yourself technically in 3 years, and how do you continuously expand your domain skills?"
+      question_text: "Where do you see yourself technically in 3 years, and how do you continuously expand your domain skills?",
+      sample_answer: "In 3 years, I aim to be a Senior Software Architect leading end-to-end full-stack AI engineering projects. I expand my skills through hands-on open-source building, reading technical architecture blogs, and regular mock interview practice."
     }
   ];
 

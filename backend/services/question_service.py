@@ -4,66 +4,104 @@ from typing import List, Dict
 QUESTION_BANK = {
     "Technical": {
         "Easy": [
-            "What is the difference between synchronous and asynchronous programming in Python/JavaScript?",
-            "Can you explain the main principles of Object-Oriented Programming (OOP)?",
-            "What are REST APIs and what are the standard HTTP methods used?",
-            "Explain the difference between SQL relational databases and NoSQL databases.",
-            "How does Git version control work, and what is the difference between git fetch and git pull?"
+            {
+                "q": "What is the difference between synchronous and asynchronous programming in Python/JavaScript?",
+                "a": "Synchronous execution blocks the main thread until a task finishes, while asynchronous execution allows non-blocking operations by running long-running tasks in the background using event loops or promises."
+            },
+            {
+                "q": "Can you explain the main principles of Object-Oriented Programming (OOP)?",
+                "a": "The 4 core OOP principles are Encapsulation (bundling data and methods), Abstraction (hiding implementation complexity), Inheritance (reusing parent class attributes), and Polymorphism (redefining methods across subclasses)."
+            },
+            {
+                "q": "What are REST APIs and what are the standard HTTP methods used?",
+                "a": "REST (Representational State Transfer) is an architectural style for web services. Standard HTTP methods include GET (read data), POST (create resource), PUT/PATCH (update resource), and DELETE (remove resource)."
+            },
+            {
+                "q": "Explain the difference between SQL relational databases and NoSQL databases.",
+                "a": "SQL databases are relational, table-based with fixed schemas (e.g., PostgreSQL), ideal for structured ACID transactions. NoSQL databases (e.g., MongoDB) are document or key-value based, optimized for flexible scaling."
+            },
+            {
+                "q": "How does Git version control work, and what is the difference between git fetch and git pull?",
+                "a": "Git tracks changes in code history. 'git fetch' downloads new commits from remote repository without merging them into your local branch, whereas 'git pull' fetches and automatically merges changes."
+            }
         ],
         "Medium": [
-            "How would you optimize a database query that is taking too long to execute?",
-            "Explain how JWT (JSON Web Token) authentication works end-to-end.",
-            "What is state management in React, and when would you use Context API vs Redux?",
-            "How do microservices communicate with each other, and what are the trade-offs of microservices vs monoliths?",
-            "Explain the concept of CORS (Cross-Origin Resource Sharing) and how to handle it securely."
+            {
+                "q": "Explain how you would design a scalable backend for a Full Stack application handling asynchronous events.",
+                "a": "I would use a decoupled microservices architecture with a FastAPI or Node.js gateway, an asynchronous message queue like Redis or RabbitMQ for event distribution, and scalable worker instances to handle heavy background processing."
+            },
+            {
+                "q": "Explain how JWT (JSON Web Token) authentication works end-to-end.",
+                "a": "The client sends login credentials to the server. Upon authentication, the server generates a digitally signed JWT token containing user payload and sends it back. The client attaches this token in HTTP Authorization headers for subsequent protected requests."
+            },
+            {
+                "q": "What is state management in React, and when would you use Context API vs Redux?",
+                "a": "React state holds component data. Context API is built-in and best for lightweight global state like themes or user sessions. Redux is preferred for complex enterprise applications with frequent state updates and strict time-travel debugging requirements."
+            },
+            {
+                "q": "How would you optimize a database query that is taking too long to execute?",
+                "a": "I analyze the query execution plan using EXPLAIN ANALYZE, add indexes on frequently filtered or joined columns, eliminate N+1 queries using eager loading, and implement Redis caching for high-read endpoints."
+            }
         ],
         "Hard": [
-            "How would you design a rate-limiting system for a high-traffic REST API backend?",
-            "Explain memory management, garbage collection, and how memory leaks occur in web applications.",
-            "How do you ensure data consistency across distributed database systems using the CAP theorem?",
-            "Design a scalable real-time chat architecture using WebSockets and Redis pub/sub.",
-            "Explain neural network overfitting and what techniques (regularization, dropout, early stopping) prevent it."
+            {
+                "q": "How would you design a rate-limiting system for a high-traffic REST API backend?",
+                "a": "I would implement a Token Bucket or Sliding Window Log algorithm backed by Redis in-memory storage at the API Gateway layer to track request rates per IP or API key with sub-millisecond latency."
+            },
+            {
+                "q": "How do you ensure data consistency across distributed database systems using the CAP theorem?",
+                "a": "According to CAP theorem, a distributed system can only guarantee 2 of Consistency, Availability, and Partition Tolerance. In financial transactions, I prioritize Consistency using 2-Phase Commit (2PC) or Saga patterns."
+            }
         ]
     },
     "HR": {
         "Easy": [
-            "Tell me about yourself and your professional background.",
-            "Why do you want to join our organization as a candidate?",
-            "What are your greatest strengths and areas where you are working to improve?",
-            "Where do you see yourself in 3 to 5 years?",
-            "What environment helps you perform at your best?"
+            {
+                "q": "Tell me about yourself and your professional background.",
+                "a": "I am a dedicated software developer passionate about building scalable full-stack applications and AI platforms. I have hands-on experience in Python, React, database engineering, and REST API design."
+            },
+            {
+                "q": "Why do you want to join our organization as a candidate?",
+                "a": "I am inspired by your company's commitment to technology innovation. My technical skills in full-stack web development and AI system engineering align closely with your team's upcoming product goals."
+            },
+            {
+                "q": "What are your greatest strengths and areas where you are working to improve?",
+                "a": "My key strength is analytical problem solving and fast technical learning. An area I am actively improving is public technical presentations, which I practice through mock interviews and tech team discussions."
+            }
         ],
         "Medium": [
-            "Describe a project you worked on that you are most proud of, and your exact contribution.",
-            "How do you prioritize your tasks when handling multiple tight deadlines?",
-            "Why are you looking to make a transition or take on this role at this stage of your career?",
-            "How do you stay updated with rapid technological developments in your domain?",
-            "What motivates you to deliver high-quality work consistently under pressure?"
-        ],
-        "Hard": [
-            "Describe a time when you received constructive criticism from a mentor or peer. How did you react?",
-            "If your project requirements change drastically two days before a launch, how do you handle it?",
-            "What would you do if you disagreed strongly with an engineering decision made by a senior team member?",
-            "Tell me about a time you made a significant mistake in a production environment. How did you resolve it?",
-            "How do you handle working with team members who have communication or work style conflicts?"
+            {
+                "q": "Describe a project you worked on that you are most proud of, and your exact contribution.",
+                "a": "I am most proud of building SmartHire AI, an AI candidate assessment platform. I designed the FastAPI backend, integrated Speech-to-Text and MediaPipe vision telemetry, and implemented the weighted scoring rubric."
+            },
+            {
+                "q": "Describe a situation where a technical deployment failed in production. How did you diagnose and resolve it?",
+                "a": "I diagnosed the issue by checking server logs and error stack traces, identified a database pool connection leak, applied a hotfix patch to close unhandled connections, and restored system operations with zero data loss."
+            }
         ]
     },
     "Behavioral": {
         "Medium": [
-            "Give an example of a situation where you had to lead a project or initiative.",
-            "Tell me about a time when you solved a complex problem using a creative approach.",
-            "Describe a scenario where you failed to meet a target. What did you learn?",
-            "How do you build trust when collaborating with cross-functional teams (e.g. Design, Product, QA)?",
-            "Describe a situation where you had to explain a complex technical concept to a non-technical stakeholder."
+            {
+                "q": "Give an example of a situation where you had to lead a project or initiative.",
+                "a": "When leading a team project, I organized daily standups, defined clear module ownership, established Git workflow standards, and ensured on-time delivery while maintaining clean code architecture."
+            },
+            {
+                "q": "Describe a scenario where you failed to meet a target. What did you learn?",
+                "a": "Earlier in a sprint, I underestimated the time needed for third-party API integration. I learned to include buffer estimations and communicate potential blockers to stakeholders early in planning."
+            }
         ]
     },
     "Aptitude": {
         "Medium": [
-            "If 5 servers process 500 requests in 5 minutes, how many servers are needed to process 2,000 requests in 10 minutes?",
-            "A project timeline is reduced by 25%. By what percentage must team efficiency increase to finish on time?",
-            "In a system with 99.9% uptime requirement, how many minutes of downtime are allowed per year (approx 525,600 min/yr)?",
-            "If an algorithm runs in O(N log N) time, how does execution time grow when input size increases from 1,000 to 10,000 items?",
-            "You have 8 identical-looking balls, 1 of which is slightly heavier. Using a balance scale, what is the minimum number of weighings needed to find the heavy ball?"
+            {
+                "q": "If 5 servers process 500 requests in 5 minutes, how many servers are needed to process 2,000 requests in 10 minutes?",
+                "a": "One server processes 100 requests in 5 minutes (20 requests per minute). To process 2,000 requests in 10 minutes, we need 200 requests per minute. Therefore, 10 servers are needed (200 / 20 = 10)."
+            },
+            {
+                "q": "In a system with 99.9% uptime requirement, how many minutes of downtime are allowed per year?",
+                "a": "A year has 525,600 minutes. 99.9% uptime means 0.1% downtime is allowed. 0.1% of 525,600 = 525.6 minutes (approx 8.76 hours) of downtime allowed per year."
+            }
         ]
     }
 }
@@ -72,11 +110,10 @@ def generate_interview_questions(category: str, difficulty: str, domain: str, nu
     cat_pool = QUESTION_BANK.get(category, QUESTION_BANK["Technical"])
     diff_pool = cat_pool.get(difficulty, list(cat_pool.values())[0])
 
-    selected_questions = random.sample(diff_pool, min(num_questions, len(diff_pool)))
+    selected = random.sample(diff_pool, min(num_questions, len(diff_pool)))
 
-    # Skill personalization
     result = []
-    for i, q in enumerate(selected_questions):
+    for i, item in enumerate(selected):
         skill_tag = skills[i % len(skills)] if skills else domain
         result.append({
             "id": i + 1,
@@ -84,6 +121,7 @@ def generate_interview_questions(category: str, difficulty: str, domain: str, nu
             "difficulty": difficulty,
             "domain": domain,
             "skill_focus": skill_tag,
-            "question_text": q
+            "question_text": item["q"],
+            "sample_answer": item["a"]
         })
     return result
