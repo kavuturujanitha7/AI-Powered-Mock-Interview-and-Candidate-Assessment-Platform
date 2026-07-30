@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Video, FileText, BarChart2, Shield, UserCheck, LogOut, Code } from 'lucide-react';
+import { Sparkles, Video, FileText, BarChart2, LogOut } from 'lucide-react';
 import { getStoredUser, removeStoredToken } from '../services/api';
 
 export default function Navbar({ activePage, setActivePage }) {
@@ -34,11 +34,11 @@ export default function Navbar({ activePage, setActivePage }) {
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Links - Clean Candidate Focus (Recruiter & Admin removed per mentor feedback) */}
           <nav className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
             <button
               onClick={() => setActivePage('landing')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                 activePage === 'landing' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -46,7 +46,7 @@ export default function Navbar({ activePage, setActivePage }) {
             </button>
             <button
               onClick={() => setActivePage('candidate-dashboard')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activePage === 'candidate-dashboard' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -54,7 +54,7 @@ export default function Navbar({ activePage, setActivePage }) {
             </button>
             <button
               onClick={() => setActivePage('resume-upload')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activePage === 'resume-upload' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -62,27 +62,11 @@ export default function Navbar({ activePage, setActivePage }) {
             </button>
             <button
               onClick={() => setActivePage('interview-setup')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activePage === 'interview-setup' || activePage === 'interview-room' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
               <Video className="w-3.5 h-3.5" /> Mock Interview
-            </button>
-            <button
-              onClick={() => setActivePage('recruiter-dashboard')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activePage === 'recruiter-dashboard' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <UserCheck className="w-3.5 h-3.5" /> Recruiter View
-            </button>
-            <button
-              onClick={() => setActivePage('admin-dashboard')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activePage === 'admin-dashboard' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5" /> Admin
             </button>
           </nav>
 
@@ -95,9 +79,6 @@ export default function Navbar({ activePage, setActivePage }) {
                     {user.full_name ? user.full_name[0] : 'U'}
                   </div>
                   <span className="text-xs font-medium text-slate-200 hidden sm:inline">{user.full_name}</span>
-                  <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-mono border border-indigo-500/30">
-                    {user.role}
-                  </span>
                 </div>
                 <button
                   onClick={handleLogout}
