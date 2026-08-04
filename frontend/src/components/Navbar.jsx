@@ -14,32 +14,34 @@ export default function Navbar({ activePage, setActivePage }) {
   return (
     <header className="sticky top-0 z-50 glass-card border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-6">
           
-          {/* Brand Logo */}
-          <div 
-            onClick={() => setActivePage('landing')} 
-            className="flex items-center gap-3 cursor-pointer group shrink-0"
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-cyan-500 to-emerald-400 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-cyan-400 group-hover:rotate-12 transition-transform" />
+          {/* Brand Logo & Navigation Links Grouped Together (Zero Floating Gaps) */}
+          <div className="flex items-center gap-6">
+            
+            {/* Logo */}
+            <div 
+              onClick={() => setActivePage('landing')} 
+              className="flex items-center gap-3 cursor-pointer group shrink-0"
+            >
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-cyan-500 to-emerald-400 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+                <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-cyan-400 group-hover:rotate-12 transition-transform" />
+                </div>
+              </div>
+              <div>
+                <span className="text-lg font-bold font-display tracking-tight text-white flex items-center gap-1.5">
+                  SmartHire <span className="text-gradient">AI</span>
+                </span>
+                <span className="text-[9px] text-slate-400 block tracking-wide font-mono uppercase">AI Mock Interview Platform</span>
               </div>
             </div>
-            <div>
-              <span className="text-lg font-bold font-display tracking-tight text-white flex items-center gap-1.5">
-                SmartHire <span className="text-gradient">AI</span>
-              </span>
-              <span className="text-[9px] text-slate-400 block tracking-wide font-mono uppercase">AI Mock Interview Platform</span>
-            </div>
-          </div>
 
-          {/* Centered Navigation Links - Perfect Balanced Layout */}
-          <nav className="flex-1 flex justify-center items-center px-4">
-            <div className="flex items-center gap-1.5 bg-slate-900/80 px-2 py-1 rounded-2xl border border-slate-800/80 shadow-inner">
+            {/* Navigation Tabs - Positioned right next to Logo without empty gaps */}
+            <nav className="hidden md:flex items-center gap-1 bg-slate-900/80 px-1.5 py-1 rounded-xl border border-slate-800/80">
               <button
                 onClick={() => setActivePage('landing')}
-                className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activePage === 'landing' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                 }`}
               >
@@ -47,7 +49,7 @@ export default function Navbar({ activePage, setActivePage }) {
               </button>
               <button
                 onClick={() => setActivePage('candidate-dashboard')}
-                className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                   activePage === 'candidate-dashboard' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                 }`}
               >
@@ -55,7 +57,7 @@ export default function Navbar({ activePage, setActivePage }) {
               </button>
               <button
                 onClick={() => setActivePage('resume-upload')}
-                className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                   activePage === 'resume-upload' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                 }`}
               >
@@ -63,14 +65,15 @@ export default function Navbar({ activePage, setActivePage }) {
               </button>
               <button
                 onClick={() => setActivePage('interview-setup')}
-                className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                   activePage === 'interview-setup' || activePage === 'interview-room' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
                 }`}
               >
                 <Video className="w-3.5 h-3.5" /> Mock Interview
               </button>
-            </div>
-          </nav>
+            </nav>
+
+          </div>
 
           {/* User Profile & Auth Button */}
           <div className="flex items-center gap-2 shrink-0">
