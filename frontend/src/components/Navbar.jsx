@@ -34,49 +34,51 @@ export default function Navbar({ activePage, setActivePage }) {
             </div>
           </div>
 
-          {/* Clean 5 Navigation Pills - Home, Candidate Hub, Resume AI, Mock Interview, AI Reports */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800/80 shadow-inner">
-            <button
-              onClick={() => setActivePage('landing')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                activePage === 'landing' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              Home
-            </button>
-            <button
-              onClick={() => setActivePage('candidate-dashboard')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activePage === 'candidate-dashboard' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <BarChart2 className="w-3.5 h-3.5" /> Candidate Hub
-            </button>
-            <button
-              onClick={() => setActivePage('resume-upload')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activePage === 'resume-upload' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" /> Resume AI
-            </button>
-            <button
-              onClick={() => setActivePage('interview-setup')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activePage === 'interview-setup' || activePage === 'interview-room' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <Video className="w-3.5 h-3.5" /> Mock Interview
-            </button>
-            <button
-              onClick={() => setActivePage('interview-report')}
-              className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                activePage === 'interview-report' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <Award className="w-3.5 h-3.5 text-emerald-400" /> AI Reports
-            </button>
-          </nav>
+          {/* Clean 5 Navigation Tabs - Balanced Spacing without Empty Gap next to AI Reports */}
+          <div className="flex-1 flex justify-center items-center px-2">
+            <nav className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800/80 shadow-inner">
+              <button
+                onClick={() => setActivePage('landing')}
+                className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  activePage === 'landing' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => setActivePage('candidate-dashboard')}
+                className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  activePage === 'candidate-dashboard' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <BarChart2 className="w-3.5 h-3.5" /> Candidate Hub
+              </button>
+              <button
+                onClick={() => setActivePage('resume-upload')}
+                className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  activePage === 'resume-upload' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" /> Resume AI
+              </button>
+              <button
+                onClick={() => setActivePage('interview-setup')}
+                className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  activePage === 'interview-setup' || activePage === 'interview-room' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <Video className="w-3.5 h-3.5" /> Mock Interview
+              </button>
+              <button
+                onClick={() => setActivePage('interview-report')}
+                className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  activePage === 'interview-report' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <Award className="w-3.5 h-3.5 text-emerald-400" /> AI Reports
+              </button>
+            </nav>
+          </div>
 
           {/* User Profile & Auth Button */}
           <div className="flex items-center gap-2 shrink-0">

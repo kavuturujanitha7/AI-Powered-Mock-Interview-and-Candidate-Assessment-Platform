@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Video, Mic, MicOff, Volume2, Clock, ArrowRight, CheckCircle2, AlertCircle, RefreshCw, Send, Sparkles, VolumeX, Edit3, Lightbulb, ChevronDown, ChevronUp, Bot, User, MessageSquare, PhoneOff } from 'lucide-react';
+import { Video, Mic, MicOff, Volume2, Clock, ArrowRight, CheckCircle2, AlertCircle, RefreshCw, Send, Sparkles, VolumeX, Edit3, Lightbulb, ChevronDown, ChevronUp, Bot, User, MessageSquare, PhoneOff, Zap, ShieldCheck } from 'lucide-react';
 import WebcamMonitor from '../components/WebcamMonitor';
 import AudioWaveform from '../components/AudioWaveform';
 import { submitQuestionAnswer, finishInterviewSession } from '../services/api';
@@ -10,6 +10,8 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   const [isRecording, setIsRecording] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showSampleAnswer, setShowSampleAnswer] = useState(false);
+  const [showAiHint, setShowAiHint] = useState(false);
+  const [noiseFilterActive, setNoiseFilterActive] = useState(true);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [transcriptStream, setTranscriptStream] = useState([]);
@@ -30,7 +32,12 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
       domain: "Full Stack Software Engineering",
       skill_focus: "System Design & Architecture",
       question_text: "To start, could you briefly introduce yourself and walk me through your technical background?",
-      sample_answer: "Yeah, I'm a software developer with experience building full-stack applications using Python, React.js, FastAPI, and PostgreSQL. I enjoy designing scalable architectures and automated AI workflows."
+      sample_answer: "Yeah, I'm a software developer with experience building full-stack applications using Python, React.js, FastAPI, and PostgreSQL. I enjoy designing scalable architectures and automated AI workflows.",
+      hints: [
+        "Mention your core tech stack (e.g. Python, React, SQL).",
+        "Highlight a key project or system you built.",
+        "Keep your introduction concise (under 60 seconds)."
+      ]
     },
     {
       id: 2,
@@ -39,7 +46,12 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
       domain: "Full Stack Software Engineering",
       skill_focus: "Backend Architecture & Security",
       question_text: "Discuss your approach to implementing secure email authentication and user-scoped data isolation in backend microservices.",
-      sample_answer: "I implement secure JWT access tokens, bcrypt password hashing, and user-scoped database isolation using foreign-key security policies and middleware context verification."
+      sample_answer: "I implement secure JWT access tokens, bcrypt password hashing, and user-scoped database isolation using foreign-key security policies and middleware context verification.",
+      hints: [
+        "Explain JWT access tokens vs session cookies.",
+        "Mention password hashing (bcrypt/Argon2).",
+        "Discuss middleware context authorization."
+      ]
     }
   ];
 
@@ -77,11 +89,10 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     }
   };
 
-  // Auto voiceover & transcript entry when question loads
   useEffect(() => {
     setShowSampleAnswer(false);
+    setShowAiHint(false);
     
-    // Add AIRA question to transcript stream
     setTranscriptStream(prev => [
       ...prev,
       { sender: 'AIRA', text: currentQ.question_text, time: formatTimer(timerSeconds) }
@@ -166,7 +177,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     stopMicRecording();
     setSubmitting(true);
     
-    // Append candidate answer to transcript stream
     if (candidateAnswer) {
       setTranscriptStream(prev => [
         ...prev,
@@ -199,8 +209,8 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   return (
     <div className="max-w-7xl mx-auto px-4 py-4 space-y-6 pb-20">
       
-      {/* ROOM TOP HEADER - ON AIR STATUS */}
-      <div className="flex items-center justify-between glass-card p-3 px-6 rounded-2xl border border-slate-800">
+      {/* ROOM TOP HEADER - ON AIR STATUS & AI NOISE FILTER */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-card p-3 px-6 rounded-2xl border border-slate-800">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 rounded-full bg-red-500 animate-ping"></div>
           <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
@@ -208,14 +218,27 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* AI NOISE CANCELLATION FILTER TOGGLE */}
+          <button
+            onClick={() => setNoiseFilterActive(!noiseFilterActive)}
+            className={`px-3 py-1.5 rounded-xl text-[11px] font-mono font-bold border transition-all flex items-center gap-1.5 ${
+              noiseFilterActive 
+                ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300' 
+                : 'bg-slate-900 border-slate-800 text-slate-400'
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+            {noiseFilterActive ? "AI Noise Cancellation: ACTIVE" : "Noise Filter: OFF"}
+          </button>
+
           <span className="px-3 py-1 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-mono text-xs font-bold flex items-center gap-1.5">
             ● ON AIR - {formatTimer(timerSeconds)}
           </span>
         </div>
       </div>
 
-      {/* MAIN TWO COLUMN LAYOUT MATCHING SCREENSHOT 1 & 3 */}
+      {/* MAIN TWO COLUMN LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* CENTER COLUMN: AIRA AI INTERVIEWER CHARACTER (8 COLS) */}
@@ -245,8 +268,8 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
               "{currentQ.question_text}"
             </div>
 
-            {/* Voiceover Replay Button */}
-            <div className="flex items-center gap-2">
+            {/* Voiceover Replay Button & AI Hint Trigger */}
+            <div className="flex items-center gap-3">
               {isSpeaking ? (
                 <button onClick={stopSpeaking} className="px-3 py-1.5 rounded-xl bg-red-500/20 text-red-400 text-xs font-semibold border border-red-500/30">
                   Stop Voice
@@ -256,10 +279,34 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
                   <Volume2 className="w-3.5 h-3.5 text-cyan-400" /> Replay Question Voice
                 </button>
               )}
+
+              {/* AI HINT GENERATOR BUTTON */}
+              <button
+                onClick={() => setShowAiHint(!showAiHint)}
+                className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 text-xs font-semibold border border-amber-500/40 flex items-center gap-1.5 hover:bg-amber-500/30 transition-all"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-400" /> {showAiHint ? "Hide AI Hints" : "⚡ Get AI Hints"}
+              </button>
             </div>
+
+            {/* AI HINTS EXPANDABLE BOX */}
+            {showAiHint && (
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 max-w-xl text-left space-y-2 animate-fade-in">
+                <span className="text-[11px] font-mono text-amber-400 font-bold uppercase block">⚡ Key Answer Points to Mention:</span>
+                <ul className="space-y-1 text-xs text-amber-200">
+                  {(currentQ.hints || ["Mention architecture patterns.", "Explain error recovery.", "Keep under 60 seconds."]).map((h, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>
+                      <span>{h}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
           </div>
 
-          {/* LIVE TRANSCRIPT STREAM BOX (MATCHING SCREENSHOT 1) */}
+          {/* LIVE TRANSCRIPT STREAM BOX */}
           <div className="glass-card p-5 rounded-3xl border border-slate-800 space-y-3">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="text-xs font-mono text-cyan-400 uppercase font-bold flex items-center gap-1.5">
@@ -285,7 +332,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
 
         </div>
 
-        {/* RIGHT COLUMN: CANDIDATE WEBCAM & LIVE TELEMETRY BARS (4 COLS MATCHING SCREENSHOT 1 & 3) */}
+        {/* RIGHT COLUMN: CANDIDATE WEBCAM & LIVE TELEMETRY BARS */}
         <div className="lg:col-span-4 space-y-4">
           
           {/* Candidate Webcam Box */}
@@ -296,7 +343,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
             </div>
           </div>
 
-          {/* LIVE TELEMETRY BARS (MATCHING SCREENSHOT 1 & 3) */}
+          {/* LIVE TELEMETRY BARS */}
           <div className="glass-card p-5 rounded-3xl border border-slate-800 space-y-3.5">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="text-xs font-mono text-slate-300 font-bold uppercase">Live Vision Telemetry</span>
@@ -384,7 +431,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
 
       </div>
 
-      {/* BOTTOM CONTROL BAR MATCHING SCREENSHOT 1 */}
+      {/* BOTTOM CONTROL BAR */}
       <div className="glass-card p-4 rounded-3xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
         
         <div className="flex items-center gap-3">
