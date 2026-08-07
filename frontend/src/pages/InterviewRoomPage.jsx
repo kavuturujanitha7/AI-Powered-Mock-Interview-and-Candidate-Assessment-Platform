@@ -9,115 +9,88 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   const [candidateAnswer, setCandidateAnswer] = useState('');
   const [isRecording, setIsRecording] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [showSampleAnswer, setShowSampleAnswer] = useState(false);
+  const [showSampleAnswer, setShowSampleAnswer] = useState(true); // Open by default for easy reading
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [activePopup, setActivePopup] = useState(null);
+  const [candidateAnswersList, setCandidateAnswersList] = useState([]);
   
   // DYNAMIC LIVE TELEMETRY STATE
   const [telemetry, setTelemetry] = useState({
-    eyeContactPct: 90,
-    attentionPct: 95,
-    confidencePct: 84,
+    eyeContactPct: 91,
+    attentionPct: 96,
+    confidencePct: 85,
     presencePct: 98,
     emotion: 'Focused & Confident'
   });
 
   const recognitionRef = useRef(null);
 
-  // 100% UNIQUE DYNAMIC QUESTIONS FOR EVERY DOMAIN (5 Questions Per Domain)
+  // EXACT 3 HIGH-IMPACT NON-REPEATING DOMAIN QUESTIONS & SAMPLE ANSWERS TO READ ALOUD
   const domainQuestionsBank = {
     "Backend Engineering": [
       {
         id: 1,
-        category: "Technical",
-        difficulty: "Medium",
-        skill_focus: "System Design & Architecture",
+        question_number: "Question 1 of 3",
+        skill_focus: "System Design & Microservices",
         question_text: "Q1: Explain how you would design a scalable backend microservices architecture handling high-concurrency requests with Redis caching.",
-        sample_answer: "I would implement a FastAPI microservices gateway, use Redis for caching frequent database queries, and route asynchronous background jobs to Celery workers."
+        sample_answer: "I design backend microservices using a FastAPI gateway, Redis for distributed query caching, and Celery workers with RabbitMQ queues for asynchronous background task processing."
       },
       {
         id: 2,
-        category: "Technical",
-        difficulty: "Hard",
-        skill_focus: "Database Indexing & Transactions",
+        question_number: "Question 2 of 3",
+        skill_focus: "Database Indexing & Query Tuning",
         question_text: "Q2: How do you optimize slow SQL query performance using B-tree indexing, query execution plans, and transaction isolation levels?",
-        sample_answer: "I analyze EXPLAIN ANALYZE execution plans, create composite indexes on foreign keys, and adjust isolation levels to prevent dirty reads and lock contention."
+        sample_answer: "I analyze EXPLAIN ANALYZE execution plans, create composite B-tree indexes on foreign key columns, and adjust isolation levels to prevent dirty reads and lock contention."
       },
       {
         id: 3,
-        category: "Technical",
-        difficulty: "Hard",
+        question_number: "Question 3 of 3",
         skill_focus: "API Security & JWT Token Auth",
         question_text: "Q3: Discuss your strategy for securing REST APIs using JWT access tokens, refresh tokens, rate limiting, and CORS security headers.",
-        sample_answer: "I issue short-lived JWT access tokens in memory, store refresh tokens in HTTP-only cookies, apply rate limiting via Redis, and enforce strict CORS origins."
+        sample_answer: "I issue short-lived JWT access tokens in authorization headers, store refresh tokens in HTTP-only cookies, apply rate limiting via Redis, and enforce strict CORS origins."
       }
     ],
     "Cloud & DevOps": [
       {
         id: 1,
-        category: "Technical",
-        difficulty: "Medium",
-        skill_focus: "Docker Containerization",
+        question_number: "Question 1 of 3",
+        skill_focus: "Docker & CI/CD Pipelines",
         question_text: "Q1: Describe your workflow for writing multi-stage Dockerfiles and automating CI/CD build pipelines using GitHub Actions.",
         sample_answer: "I write multi-stage Dockerfiles to minimize container image sizes and build automated GitHub Actions workflows for linting, testing, and container deployment."
       },
       {
         id: 2,
-        category: "Technical",
-        difficulty: "Hard",
+        question_number: "Question 2 of 3",
         skill_focus: "Kubernetes & Infrastructure as Code",
         question_text: "Q2: How do you manage infrastructure provisioning using Terraform and orchestrate zero-downtime rolling updates in Kubernetes?",
         sample_answer: "I define cloud resources with Terraform code modules and execute zero-downtime rolling updates in Kubernetes using readiness and liveness health probes."
       },
       {
         id: 3,
-        category: "Technical",
-        difficulty: "Hard",
-        skill_focus: "Cloud Observability & Monitoring",
+        question_number: "Question 3 of 3",
+        skill_focus: "Centralized Monitoring & Logging",
         question_text: "Q3: How do you set up centralized logging and metrics monitoring using Prometheus, Grafana, and ELK Stack for cloud microservices?",
         sample_answer: "I aggregate log streams via Fluentd into Elasticsearch, monitor service metrics using Prometheus scrapers, and build alert dashboards in Grafana."
-      }
-    ],
-    "Data Science & AI/ML": [
-      {
-        id: 1,
-        category: "Technical",
-        difficulty: "Medium",
-        skill_focus: "LLM RAG Pipelines & Vector DBs",
-        question_text: "Q1: Explain how Retrieval-Augmented Generation (RAG) works using vector databases (Pinecone/ChromaDB) and Transformer embedding models.",
-        sample_answer: "RAG converts documents into vector embeddings using transformer models, indexes vectors in ChromaDB, and injects retrieved context into LLM prompts."
-      },
-      {
-        id: 2,
-        category: "Technical",
-        difficulty: "Hard",
-        skill_focus: "Model Fine-Tuning & Regularization",
-        question_text: "Q2: What techniques (LoRA, PEFT, Dropout, L2 Regularization) do you use to fine-tune open-source models while preventing overfitting?",
-        sample_answer: "I use Low-Rank Adaptation (LoRA) for parameter-efficient fine-tuning, monitor validation loss, and apply dropout layers to prevent overfitting."
       }
     ]
   };
 
   const activeDomain = sessionData?.domain || sessionData?.category || "Backend Engineering";
-  const questions = sessionData?.questions && sessionData.questions.length > 0
-    ? sessionData.questions
-    : (domainQuestionsBank[activeDomain] || domainQuestionsBank["Backend Engineering"]);
-
+  const questions = (domainQuestionsBank[activeDomain] || domainQuestionsBank["Backend Engineering"]).slice(0, 3);
   const currentQ = questions[currentIdx] || questions[0];
 
-  // Timer effect & Live AI Pop-up Toast Notifications
+  // Timer effect
   useEffect(() => {
     const timer = setInterval(() => setTimerSeconds(prev => prev + 1), 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Trigger Live AI Pop-up Messages during interview
+  // Trigger Live AI Pop-up Toast Notifications (Max 2-3 alerts before auto-wrap)
   useEffect(() => {
     const popups = [
-      { text: "🔔 AI Assessment: Excellent Eye-Contact (92%)! Keep speaking steadily.", color: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300" },
-      { text: "🎙️ Speech Telemetry: Optimal pace (138 WPM). Zero filler words detected!", color: "bg-emerald-500/20 border-emerald-500/40 text-emerald-300" },
-      { text: "✨ AI Evaluator Note: Strong technical keyword usage detected.", color: "bg-indigo-500/20 border-indigo-500/40 text-indigo-300" }
+      { text: "🔔 AI Assessment: Excellent Eye-Contact (91%)! Keep speaking naturally.", color: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300" },
+      { text: "🎙️ Speech Telemetry: Optimal pace (138 WPM). Zero filler words detected!", color: "bg-emerald-500/20 border-emerald-500/40 text-emerald-300" }
     ];
 
     const popupInterval = setInterval(() => {
@@ -126,8 +99,8 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
 
       setTimeout(() => {
         setActivePopup(null);
-      }, 4000);
-    }, 12000);
+      }, 3500);
+    }, 10000);
 
     return () => clearInterval(popupInterval);
   }, []);
@@ -159,7 +132,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   };
 
   useEffect(() => {
-    setShowSampleAnswer(false);
+    setShowSampleAnswer(true);
     const timeout = setTimeout(() => {
       speakQuestion();
     }, 400);
@@ -238,28 +211,48 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // SUBMIT & AUTO-PROGRESS UNTIL 3 QUESTIONS FINISHED -> AUTO CLOSE TO REPORT
   const handleNextQuestion = async () => {
     stopSpeaking();
     stopMicRecording();
     setSubmitting(true);
 
+    const finalAnswerText = candidateAnswer || currentQ.sample_answer;
+
+    const answerEntry = {
+      q_num: currentIdx + 1,
+      q_text: currentQ.question_text,
+      user_answer: finalAnswerText,
+      sample_answer: currentQ.sample_answer
+    };
+
+    setCandidateAnswersList(prev => [...prev, answerEntry]);
+
     await submitQuestionAnswer({
       session_id: sessionData?.session_id || 1,
       question_index: currentIdx + 1,
       question_text: currentQ.question_text,
-      candidate_answer: candidateAnswer || currentQ.sample_answer,
-      transcript: candidateAnswer,
+      candidate_answer: finalAnswerText,
+      transcript: finalAnswerText,
       eye_contact_ratio: telemetry.eyeContactPct / 100.0
     });
 
     setCandidateAnswer('');
     
-    if (currentIdx < questions.length - 1) {
+    // Auto-finish after 3 questions (or if last question reached)
+    if (currentIdx < 2) {
       setCurrentIdx(prev => prev + 1);
       setSubmitting(false);
     } else {
+      // AUTO CLOSE INTERVIEW AFTER 3 QUESTIONS & GENERATE REPORT
       const report = await finishInterviewSession(sessionData?.session_id || 1);
-      setFinalReport(report);
+      
+      const fullCustomReport = {
+        ...report,
+        answers_history: [...candidateAnswersList, answerEntry]
+      };
+
+      setFinalReport(fullCustomReport);
       setSubmitting(false);
       setActivePage('interview-report');
     }
@@ -285,7 +278,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
               AI Interviewer <span className="text-[10px] text-cyan-400 font-mono font-normal">• Session Tape Active</span>
             </h1>
             <span className="text-[11px] text-indigo-300 font-mono">
-              Domain: <strong className="text-white">{activeDomain}</strong> (Question {currentIdx + 1} of {questions.length})
+              Domain: <strong className="text-white">{activeDomain}</strong> ({currentQ.question_number})
             </span>
           </div>
         </div>
@@ -360,7 +353,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
               </div>
 
               <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 space-y-1 ml-2">
-                <span className="text-[10px] font-mono text-indigo-300 uppercase font-bold">YOU (CANDIDATE):</span>
+                <span className="text-[10px] font-mono text-indigo-300 uppercase font-bold">YOU (CANDIDATE SPOKEN ANSWER):</span>
                 <p className="text-slate-200 italic">
                   {candidateAnswer || "Speak your answer aloud into your microphone (words transcribe here in real-time as you talk)..."}
                 </p>
@@ -385,7 +378,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
               </span>
             </div>
 
-            {/* Metric 1: Eye Contact */}
+            {/* Metric 1: Dynamic Eye Contact */}
             <div className="space-y-1">
               <div className="flex justify-between text-[11px] font-mono">
                 <span className="text-slate-400">Eye Contact</span>
@@ -396,7 +389,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
               </div>
             </div>
 
-            {/* Metric 2: Attention */}
+            {/* Metric 2: Dynamic Attention */}
             <div className="space-y-1">
               <div className="flex justify-between text-[11px] font-mono">
                 <span className="text-slate-400">Attention</span>
@@ -407,7 +400,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
               </div>
             </div>
 
-            {/* Metric 3: Confidence */}
+            {/* Metric 3: Dynamic Confidence */}
             <div className="space-y-1">
               <div className="flex justify-between text-[11px] font-mono">
                 <span className="text-slate-400">Confidence</span>
@@ -418,7 +411,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
               </div>
             </div>
 
-            {/* Metric 4: Face Presence */}
+            {/* Metric 4: Dynamic Face Presence */}
             <div className="space-y-1">
               <div className="flex justify-between text-[11px] font-mono">
                 <span className="text-slate-400">Face Presence</span>
@@ -435,31 +428,24 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
             </div>
           </div>
 
-          {/* AI SAMPLE ANSWER EXPANDER */}
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
-            <button
-              onClick={() => setShowSampleAnswer(!showSampleAnswer)}
-              className="w-full text-xs font-semibold text-amber-400 flex items-center justify-between"
-            >
+          {/* HIGH-SCORE SAMPLE ANSWER TO SPEAK OUT LOUD (ALWAYS VISIBLE FOR USER TO READ) */}
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-2">
+            <div className="flex items-center justify-between text-xs font-bold text-amber-300">
               <span className="flex items-center gap-1.5">
-                <Lightbulb className="w-4 h-4" /> ✨ View AI High-Score Answer
+                <Lightbulb className="w-4 h-4 text-amber-400" /> ✨ High-Score Answer to Speak Aloud:
               </span>
-              {showSampleAnswer ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
+            </div>
 
-            {showSampleAnswer && (
-              <div className="pt-2 space-y-2 text-xs text-slate-300">
-                <p className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-[11px] leading-relaxed font-sans">
-                  "{currentQ.sample_answer}"
-                </p>
-                <button
-                  onClick={insertSampleAnswer}
-                  className="w-full py-1.5 rounded-xl bg-amber-500/20 text-amber-300 text-[11px] font-semibold border border-amber-500/40"
-                >
-                  Auto-Fill This Answer
-                </button>
-              </div>
-            )}
+            <p className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-100 leading-relaxed font-sans font-medium">
+              "{currentQ.sample_answer}"
+            </p>
+
+            <button
+              onClick={insertSampleAnswer}
+              className="w-full py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/40 text-amber-200 text-xs font-bold border border-amber-500/50 flex items-center justify-center gap-1.5 transition-all"
+            >
+              <Edit3 className="w-3.5 h-3.5" /> 1-Click Auto-Fill Answer
+            </button>
           </div>
 
         </div>
@@ -496,10 +482,10 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
             className="px-6 py-2.5 rounded-xl font-bold text-xs bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/25 transition-all flex items-center gap-2"
           >
             {submitting ? "Analyzing..." : (
-              currentIdx < questions.length - 1 ? (
-                <>Submit Answer & Next Question <ArrowRight className="w-4 h-4" /></>
+              currentIdx < 2 ? (
+                <>Submit Spoken Answer & Next Question <ArrowRight className="w-4 h-4" /></>
               ) : (
-                <>End Interview & View Report <PhoneOff className="w-4 h-4" /></>
+                <>Complete Interview & Generate Report <PhoneOff className="w-4 h-4" /></>
               )
             )}
           </button>
