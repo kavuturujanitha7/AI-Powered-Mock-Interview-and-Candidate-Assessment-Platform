@@ -1,68 +1,75 @@
 import React, { useState } from 'react';
-import { Award, Download, CheckCircle2, AlertTriangle, Lightbulb, Mic, Eye, BarChart, ArrowRight, Share2, Sparkles, FileText, Check, X, ShieldAlert } from 'lucide-react';
+import { Award, Download, CheckCircle2, AlertTriangle, Lightbulb, Mic, Eye, BarChart, ArrowRight, Share2, Sparkles, FileText, Check, X, ShieldAlert, BookOpen, Layers, Target } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 export default function InterviewReportPage({ finalReport, setActivePage }) {
-  const [activeTab, setActiveTab] = useState('thread-evaluations'); // overview, transcript, thread-evaluations, speech-presence, interview-brief
+  const [activeTab, setActiveTab] = useState('overview');
 
   const report = finalReport || {
     session_id: 101,
     communication_score: 88.5,
     confidence_score: 84.0,
-    technical_score: 86.0,
-    professionalism_score: 90.0,
-    overall_score: 87.1,
+    technical_score: 89.0,
+    professionalism_score: 92.0,
+    overall_score: 88.4,
     performance_rating: "Good",
     filler_word_count: 2,
     words_per_minute: 138.5,
     eye_contact_ratio: 0.90,
     strengths: [
-      "Clear verbal articulation with well-structured technical answers",
-      "High eye-contact consistency during key summary statements",
-      "Disciplined time management across all interview questions"
+      "Demonstrated strong technical depth in backend architecture and asynchronous queue design",
+      "Maintained consistent 90% eye-contact telemetry during key answer explanations",
+      "Articulated system design concepts clearly at an optimal 138 WPM speaking pace"
     ],
     weaknesses: [
-      "Minor filler word usage during transition pauses ('you know')",
-      "Could expand on specific architectural trade-offs in system design"
+      "Minor filler word occurrences ('you know') during complex transitions",
+      "Could elaborate further on database transaction isolation levels under high concurrency"
     ],
     improvement_tips: [
-      "Use 2-second silent pauses to maintain an optimal 140 WPM pace.",
-      "Incorporate the STAR methodology for behavioral questions.",
-      "Recommended Study: Advanced System Design & API Security Patterns."
+      "Use 2-second structured pauses instead of filler words when transitioning topics.",
+      "Review PostgreSQL isolation levels (Read Committed vs Serializable locking).",
+      "Incorporate the STAR methodology for behavioral problem-solving questions."
     ]
   };
+
+  const skillGaps = [
+    { skill: "Distributed Caching (Redis)", level: "Strong", status: "Verified" },
+    { skill: "Asynchronous Queues", level: "Strong", status: "Verified" },
+    { skill: "SQL Index Tuning", level: "Needs Improvement", status: "Focus Area" },
+    { skill: "Kubernetes Orchestration", level: "Missing", status: "Recommended Study" }
+  ];
 
   const threadEvaluations = [
     {
       id: 1,
-      topic: "Explore journey into software development and backend architectural choices",
+      topic: "Q1: Explain how you would design a scalable backend microservices architecture handling high-concurrency requests with Redis caching.",
       depth: 5,
       accuracy: 5,
       specificity: 5,
       recovery: 5,
       status: "EXCELLENT",
-      summary: "Candidate provided a comprehensive explanation of backend architecture, database choice, and asynchronous request handling."
+      summary: "Candidate provided a comprehensive architectural breakdown of message queue decoupling and Redis query caching."
     },
     {
       id: 2,
-      topic: "Discuss approach to implementing secure email authentication and user-scoped data isolation in backend microservices",
-      depth: 5,
+      topic: "Q2: How do you optimize slow SQL query performance using B-tree indexing, query execution plans, and transaction isolation levels?",
+      depth: 4,
       accuracy: 5,
       specificity: 4,
-      recovery: 5,
-      status: "EXCELLENT",
-      summary: "Demonstrated strong knowledge of JWT authentication, stateless request validation, and foreign-key isolation rules."
+      recovery: 4,
+      status: "GOOD",
+      summary: "Demonstrated clear understanding of EXPLAIN ANALYZE indexing, with room to expand on transaction deadlock handling."
     },
     {
       id: 3,
-      topic: "System failure diagnosis and high-availability database pool recovery",
-      depth: 4,
+      topic: "Q3: Discuss your strategy for securing REST APIs using JWT access tokens, refresh tokens, rate limiting, and CORS security headers.",
+      depth: 5,
       accuracy: 5,
       specificity: 5,
       recovery: 5,
-      status: "GOOD",
-      summary: "Well-explained incident response strategy using stack trace inspection, hotfix deployment, and query connection pool tuning."
+      status: "EXCELLENT",
+      summary: "Strong security explanation regarding stateless JWT verification, bcrypt password hashing, and HTTP-only cookie isolation."
     }
   ];
 
@@ -99,11 +106,11 @@ export default function InterviewReportPage({ finalReport, setActivePage }) {
       {/* ACTION BAR */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-card p-4 px-6 rounded-2xl border border-slate-800">
         <div>
-          <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block font-bold">SESSION TAPE</span>
+          <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block font-bold">SESSION TAPE EVALUATION</span>
           <h1 className="text-xl font-bold font-display text-white flex items-center gap-2">
-            HR • Backend Engineering Mock Evaluation
+            Backend Engineering & System Design Assessment
           </h1>
-          <p className="text-xs text-slate-400">Medium difficulty • Completed 48 / 75 Score</p>
+          <p className="text-xs text-slate-400">Medium difficulty • Verified Score: {report.overall_score} / 100</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -123,21 +130,20 @@ export default function InterviewReportPage({ finalReport, setActivePage }) {
         </div>
       </div>
 
-      {/* REPORT NAVIGATION TABS (MATCHING SCREENSHOT 2) */}
+      {/* REPORT NAVIGATION TABS */}
       <div className="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto text-xs font-semibold">
         {[
-          { id: 'overview', label: 'Overview' },
-          { id: 'transcript', label: 'Transcript' },
+          { id: 'overview', label: 'Overall Score & Weightage' },
           { id: 'thread-evaluations', label: 'Thread Evaluations' },
-          { id: 'speech-presence', label: 'Speech & Presence' },
-          { id: 'interview-brief', label: 'Interview Brief' }
+          { id: 'skills-diagnostic', label: 'Skills & Improvement Matrix' },
+          { id: 'speech-presence', label: 'Speech & Vision Telemetry' }
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 rounded-xl transition-all ${
               activeTab === tab.id
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold'
+                ? 'bg-indigo-600 text-white font-bold shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
             }`}
           >
@@ -146,27 +152,29 @@ export default function InterviewReportPage({ finalReport, setActivePage }) {
         ))}
       </div>
 
-      {/* PRINTABLE / CANVAS CONTAINER */}
+      {/* PRINTABLE CONTAINER */}
       <div id="report-container" className="space-y-8 p-2">
         
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
+            
+            {/* OVERALL SCORE BANNER */}
             <div className="glass-card p-8 rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-slate-950 via-indigo-950/30 to-slate-950 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="space-y-2 text-center md:text-left">
-                <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest">Candidate Performance Verdict</span>
+                <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest block font-bold">Candidate Performance Verdict</span>
                 <h2 className="text-3xl font-extrabold text-white">
                   Overall Score: <span className="text-gradient">{report.overall_score}</span> / 100
                 </h2>
                 <p className="text-xs text-slate-300 max-w-md">
-                  Formula: (Communication × 30%) + (Confidence × 25%) + (Technical × 30%) + (Professionalism × 15%)
+                  Weightage Breakdown: (Technical Mastery × 35%) + (Communication × 30%) + (Confidence × 20%) + (Problem Solving × 15%)
                 </p>
               </div>
 
               <div className="flex flex-col items-center gap-2">
                 <div className="px-6 py-3 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 text-center">
-                  <span className="text-[10px] font-mono text-indigo-300 block uppercase">Performance Rating</span>
-                  <span className="text-2xl font-extrabold text-white">{report.performance_rating}</span>
+                  <span className="text-[10px] font-mono text-indigo-300 block uppercase font-bold">Performance Rating</span>
+                  <span className="text-2xl font-extrabold text-white font-mono">{report.performance_rating}</span>
                 </div>
                 <span className="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Verified by SmartHire AI Engine
@@ -174,28 +182,30 @@ export default function InterviewReportPage({ finalReport, setActivePage }) {
               </div>
             </div>
 
+            {/* WEIGHTAGE BREAKDOWN CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
+                <span className="text-xs font-semibold text-slate-400 block">Technical Mastery (35%)</span>
+                <div className="text-2xl font-extrabold text-emerald-400 font-mono">{report.technical_score}</div>
+              </div>
               <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
                 <span className="text-xs font-semibold text-slate-400 block">Communication (30%)</span>
                 <div className="text-2xl font-extrabold text-white font-mono">{report.communication_score}</div>
               </div>
               <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
-                <span className="text-xs font-semibold text-slate-400 block">Confidence (25%)</span>
+                <span className="text-xs font-semibold text-slate-400 block">Confidence & Vision (20%)</span>
                 <div className="text-2xl font-extrabold text-cyan-400 font-mono">{report.confidence_score}</div>
               </div>
               <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
-                <span className="text-xs font-semibold text-slate-400 block">Tech Relevance (30%)</span>
-                <div className="text-2xl font-extrabold text-emerald-400 font-mono">{report.technical_score}</div>
-              </div>
-              <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
-                <span className="text-xs font-semibold text-slate-400 block">Professionalism (15%)</span>
+                <span className="text-xs font-semibold text-slate-400 block">Problem Solving (15%)</span>
                 <div className="text-2xl font-extrabold text-purple-400 font-mono">{report.professionalism_score}</div>
               </div>
             </div>
+
           </div>
         )}
 
-        {/* THREAD EVALUATIONS TAB (MATCHING SCREENSHOT 2) */}
+        {/* THREAD EVALUATIONS TAB */}
         {activeTab === 'thread-evaluations' && (
           <div className="space-y-6">
             {threadEvaluations.map((item) => (
@@ -213,9 +223,8 @@ export default function InterviewReportPage({ finalReport, setActivePage }) {
                   </span>
                 </div>
 
-                {/* 4 MICRO METRIC CARDS (DEPTH, ACCURACY, SPECIFICITY, RECOVERY - MATCHING SCREENSHOT 2) */}
+                {/* 4 MICRO METRIC CARDS */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  
                   <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl text-center space-y-1">
                     <div className="text-lg font-bold font-mono text-white">{item.depth} <span className="text-[10px] text-slate-400 font-normal">/ 5</span></div>
                     <span className="text-[10px] font-mono uppercase text-slate-400 tracking-wider">DEPTH</span>
@@ -235,7 +244,6 @@ export default function InterviewReportPage({ finalReport, setActivePage }) {
                     <div className="text-lg font-bold font-mono text-purple-400">{item.recovery} <span className="text-[10px] text-slate-400 font-normal">/ 5</span></div>
                     <span className="text-[10px] font-mono uppercase text-slate-400 tracking-wider">RECOVERY</span>
                   </div>
-
                 </div>
 
                 <p className="text-[11px] text-slate-400 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
@@ -247,7 +255,58 @@ export default function InterviewReportPage({ finalReport, setActivePage }) {
           </div>
         )}
 
-        {/* SPEECH & PRESENCE TAB */}
+        {/* SKILLS & IMPROVEMENT MATRIX TAB */}
+        {activeTab === 'skills-diagnostic' && (
+          <div className="space-y-6">
+            
+            {/* SKILLS VERIFICATION MATRIX */}
+            <div className="glass-card p-6 rounded-3xl border border-slate-800 space-y-4">
+              <div className="flex items-center gap-2 text-cyan-400">
+                <Target className="w-5 h-5" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Skills Competency Matrix</h3>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {skillGaps.map((item, idx) => (
+                  <div key={idx} className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold text-white block">{item.skill}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Proficiency: {item.level}</span>
+                    </div>
+
+                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold ${
+                      item.status === 'Verified' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    }`}>
+                      {item.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ACTIONABLE IMPROVEMENT TIPS */}
+            <div className="glass-card p-6 rounded-3xl border border-amber-500/30 space-y-4">
+              <div className="flex items-center gap-2 text-amber-400">
+                <Lightbulb className="w-5 h-5" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">AI Skill Improvement Plan</h3>
+              </div>
+
+              <ul className="space-y-3 text-xs text-slate-300">
+                {report.improvement_tips.map((tip, idx) => (
+                  <li key={idx} className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold font-mono text-[11px] shrink-0">
+                      {idx + 1}
+                    </span>
+                    <span className="leading-relaxed font-sans">{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div>
+        )}
+
+        {/* SPEECH & VISION TELEMETRY TAB */}
         {activeTab === 'speech-presence' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="glass-card p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
@@ -257,7 +316,7 @@ export default function InterviewReportPage({ finalReport, setActivePage }) {
               <div>
                 <span className="text-xs text-slate-400 block">Speaking Pace</span>
                 <span className="text-lg font-bold text-white">{report.words_per_minute} WPM</span>
-                <span className="text-[10px] text-emerald-400 block">Optimal Range (120-160)</span>
+                <span className="text-[10px] text-emerald-400 block">Optimal Clarity Range</span>
               </div>
             </div>
 

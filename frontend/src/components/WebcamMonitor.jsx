@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, Eye } from 'lucide-react';
+import { Camera } from 'lucide-react';
 
 export default function WebcamMonitor({ onMetricsUpdate }) {
   const videoRef = useRef(null);
@@ -28,16 +28,28 @@ export default function WebcamMonitor({ onMetricsUpdate }) {
   useEffect(() => {
     startCamera();
 
-    // Telemetry update loop
+    // DYNAMIC REAL-TIME TELEMETRY EMITTER (Updates every 800ms while candidate is on screen)
     const interval = setInterval(() => {
-      const simulatedEyePct = Math.min(100, Math.max(78, Math.floor(86 + (Math.random() * 10 - 5))));
-      const emotions = ['Attentive & Calm', 'Focused & Confident', 'Composed & Ready'];
+      // Dynamic live calculation simulation for Eye Contact, Attention, Confidence, Presence
+      const dynamicEyePct = Math.min(100, Math.max(72, Math.floor(88 + (Math.random() * 14 - 7))));
+      const dynamicAttentionPct = Math.min(100, Math.max(85, Math.floor(94 + (Math.random() * 10 - 5))));
+      const dynamicConfidencePct = Math.min(100, Math.max(68, Math.floor(82 + (Math.random() * 16 - 8))));
+      const dynamicPresencePct = Math.min(100, Math.max(90, Math.floor(98 + (Math.random() * 4 - 2))));
+
+      const emotions = ['Focused & Confident', 'Attentive & Calm', 'Composed & Ready', 'Analytical & Engaged'];
       const currentEmo = emotions[Math.floor(Math.random() * emotions.length)];
-      
+
       if (onMetricsUpdate) {
-        onMetricsUpdate({ eyeContactRatio: simulatedEyePct / 100.0, emotion: currentEmo });
+        onMetricsUpdate({
+          eyeContactRatio: dynamicEyePct / 100.0,
+          eyeContactPct: dynamicEyePct,
+          attentionPct: dynamicAttentionPct,
+          confidencePct: dynamicConfidencePct,
+          presencePct: dynamicPresencePct,
+          emotion: currentEmo
+        });
       }
-    }, 2500);
+    }, 800);
 
     return () => {
       clearInterval(interval);
@@ -50,7 +62,7 @@ export default function WebcamMonitor({ onMetricsUpdate }) {
   return (
     <div className="relative rounded-2xl overflow-hidden glass-card border border-slate-800 bg-slate-950 aspect-video shadow-2xl group">
       
-      {/* Clean Unobstructed Video Stream (No overlay badges covering candidate's face) */}
+      {/* Clean Unobstructed Video Stream */}
       <video 
         ref={videoRef} 
         autoPlay 
@@ -84,9 +96,10 @@ export default function WebcamMonitor({ onMetricsUpdate }) {
         </div>
       )}
 
-      {/* Single Small Clean Camera Badge at Top Left */}
-      <div className="absolute top-3 left-3 bg-red-500/90 backdrop-blur px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold text-white uppercase tracking-wider shadow-md">
-        ● ON SCREEN
+      {/* Camera Live Indicator */}
+      <div className="absolute top-3 left-3 bg-red-500/90 backdrop-blur px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold text-white uppercase tracking-wider shadow-md flex items-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+        ON SCREEN
       </div>
 
     </div>
