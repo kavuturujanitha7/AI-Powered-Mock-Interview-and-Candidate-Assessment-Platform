@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Video, Mic, MicOff, Volume2, Clock, ArrowRight, CheckCircle2, AlertCircle, RefreshCw, Send, Sparkles, VolumeX, Edit3, Lightbulb, ChevronDown, ChevronUp, Bot, User, MessageSquare } from 'lucide-react';
+import { Video, Mic, MicOff, Volume2, Clock, ArrowRight, CheckCircle2, AlertCircle, RefreshCw, Send, Sparkles, VolumeX, Edit3, Lightbulb, ChevronDown, ChevronUp, Bot, User, MessageSquare, PhoneOff } from 'lucide-react';
 import WebcamMonitor from '../components/WebcamMonitor';
 import AudioWaveform from '../components/AudioWaveform';
-import AIInterviewerAgent from '../components/AIInterviewerAgent';
 import { submitQuestionAnswer, finishInterviewSession } from '../services/api';
 
 export default function InterviewRoomPage({ sessionData, setActivePage, setFinalReport }) {
@@ -11,11 +10,16 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   const [isRecording, setIsRecording] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showSampleAnswer, setShowSampleAnswer] = useState(false);
-  const [aiDialogue, setAiDialogue] = useState('Hello! I am Sarah, your AI Technical Hiring Manager. Let\'s begin your interview session.');
-  const [micStatusText, setMicStatusText] = useState('🎙️ Microphone Active: Speak your answer into your mic naturally!');
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [visionMetrics, setVisionMetrics] = useState({ eyeContactRatio: 0.88, emotion: 'Focused & Confident' });
+  const [transcriptStream, setTranscriptStream] = useState([]);
+  const [visionMetrics, setVisionMetrics] = useState({ 
+    eyeContactRatio: 0.90, 
+    attention: 100, 
+    confidence: 78, 
+    facePresence: 100, 
+    emotion: 'Neutral' 
+  });
   const recognitionRef = useRef(null);
 
   const questions = sessionData?.questions || [
@@ -24,37 +28,22 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
       category: "Technical",
       difficulty: "Medium",
       domain: "Full Stack Software Engineering",
-      skill_focus: "System Design & Async Architecture",
-      question_text: "Explain how you would design a scalable backend for a Full Stack Software Engineering application handling asynchronous events.",
-      sample_answer: "I would use a decoupled microservices architecture with a FastAPI or Node.js gateway, an asynchronous message queue like Redis or RabbitMQ for event distribution, and scalable worker instances to handle heavy background processing."
+      skill_focus: "System Design & Architecture",
+      question_text: "To start, could you briefly introduce yourself and walk me through your technical background?",
+      sample_answer: "Yeah, I'm a software developer with experience building full-stack applications using Python, React.js, FastAPI, and PostgreSQL. I enjoy designing scalable architectures and automated AI workflows."
     },
     {
       id: 2,
       category: "Technical",
       difficulty: "Medium",
       domain: "Full Stack Software Engineering",
-      skill_focus: "API Security & JWT Token Auth",
-      question_text: "What are JWT access tokens, how do they differ from session cookies, and how do you prevent token theft?",
-      sample_answer: "JWT tokens are stateless, digitally signed JSON objects sent in HTTP Authorization headers. Unlike session cookies, servers don't need to store session IDs in memory. Theft is prevented using short expiration times, HTTPS TLS encryption, and storing tokens securely."
-    },
-    {
-      id: 3,
-      category: "Behavioral",
-      difficulty: "Medium",
-      domain: "Full Stack Software Engineering",
-      skill_focus: "Problem Solving & Deployment Failure",
-      question_text: "Describe a situation where a technical deployment failed in production. How did you diagnose and resolve it?",
-      sample_answer: "I diagnosed the issue by inspecting server logs and error stack traces, identified a database pool connection leak, applied a hotfix patch to close unhandled connections, and restored system operations with zero data loss within 15 minutes."
+      skill_focus: "Backend Architecture & Security",
+      question_text: "Discuss your approach to implementing secure email authentication and user-scoped data isolation in backend microservices.",
+      sample_answer: "I implement secure JWT access tokens, bcrypt password hashing, and user-scoped database isolation using foreign-key security policies and middleware context verification."
     }
   ];
 
   const currentQ = questions[currentIdx] || questions[0];
-
-  const conversationalIntros = [
-    "Hello and welcome! I am Sarah, your AI Hiring Manager. Please look at your camera and speak your answer into the microphone when ready.",
-    "Thank you for that response! Let's move on to our next technical question.",
-    "Great explanation. Now let's explore your behavioral approach to problem-solving..."
-  ];
 
   // Timer effect
   useEffect(() => {
@@ -62,17 +51,14 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     return () => clearInterval(timer);
   }, []);
 
-  // Web Speech Synthesis (AI Voiceover)
+  // Web Speech Synthesis (AIRA AI Voiceover)
   const speakQuestion = () => {
     try {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         window.speechSynthesis.resume();
 
-        const introText = conversationalIntros[currentIdx % conversationalIntros.length];
-        const fullText = `${introText} ${currentQ.question_text}`;
-
-        const utterance = new SpeechSynthesisUtterance(fullText);
+        const utterance = new SpeechSynthesisUtterance(currentQ.question_text);
         utterance.rate = 0.95;
         utterance.pitch = 1.05;
         utterance.lang = 'en-US';
@@ -91,11 +77,15 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     }
   };
 
-  // Auto voiceover & dialogue update when new question loads
+  // Auto voiceover & transcript entry when question loads
   useEffect(() => {
     setShowSampleAnswer(false);
-    const introText = conversationalIntros[currentIdx % conversationalIntros.length];
-    setAiDialogue(`${introText} "${currentQ.question_text}"`);
+    
+    // Add AIRA question to transcript stream
+    setTranscriptStream(prev => [
+      ...prev,
+      { sender: 'AIRA', text: currentQ.question_text, time: formatTimer(timerSeconds) }
+    ]);
 
     const timeout = setTimeout(() => {
       speakQuestion();
@@ -110,16 +100,13 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     }
   };
 
-  // Web Speech Recognition (Real-Time Mic Audio STT)
+  // Web Speech Recognition (Real-Time Mic STT)
   const startMicRecording = async () => {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        setMicStatusText('Speech recognition active. Speak into your microphone.');
-        return;
-      }
+      if (!SpeechRecognition) return;
 
       if (recognitionRef.current) {
         try { recognitionRef.current.stop(); } catch (e) {}
@@ -132,7 +119,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
 
       recognition.onstart = () => {
         setIsRecording(true);
-        setMicStatusText('🎙️ LIVE RECORDING: Speak your answer into the microphone now!');
       };
 
       recognition.onresult = (event) => {
@@ -145,38 +131,28 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
         }
       };
 
-      recognition.onerror = (err) => {
-        console.warn("Speech recognition error:", err);
-        setMicStatusText('Mic active. Speak your answer clearly into your microphone.');
-      };
-
       recognition.onend = () => {
-        if (isRecording) {
-          try { recognition.start(); } catch (e) {}
+        if (isRecording && recognitionRef.current) {
+          try { recognitionRef.current.start(); } catch (e) {}
         }
       };
 
       recognitionRef.current = recognition;
       recognition.start();
     } catch (err) {
-      console.warn("Microphone access:", err);
-      setMicStatusText('Microphone active. Speak your answer or click Auto-Fill.');
+      console.warn("Microphone access error:", err);
     }
   };
 
   const stopMicRecording = () => {
     setIsRecording(false);
-    setMicStatusText('Microphone Paused.');
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch (e) {}
     }
   };
 
   const insertSampleAnswer = () => {
-    setCandidateAnswer(
-      currentQ.sample_answer || 
-      "I diagnosed the issue by inspecting server logs and error stack traces, identified a database pool connection leak, applied a hotfix patch to close unhandled connections, and restored system operations with zero data loss within 15 minutes."
-    );
+    setCandidateAnswer(currentQ.sample_answer);
   };
 
   const formatTimer = (secs) => {
@@ -190,11 +166,19 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     stopMicRecording();
     setSubmitting(true);
     
+    // Append candidate answer to transcript stream
+    if (candidateAnswer) {
+      setTranscriptStream(prev => [
+        ...prev,
+        { sender: 'YOU', text: candidateAnswer, time: formatTimer(timerSeconds) }
+      ]);
+    }
+
     await submitQuestionAnswer({
       session_id: sessionData?.session_id || 1,
       question_index: currentIdx + 1,
       question_text: currentQ.question_text,
-      candidate_answer: candidateAnswer || currentQ.sample_answer || "In a production environment, I diagnose technical failures by analyzing server logs and error metrics.",
+      candidate_answer: candidateAnswer || currentQ.sample_answer,
       transcript: candidateAnswer,
       eye_contact_ratio: visionMetrics.eyeContactRatio
     });
@@ -213,164 +197,230 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 py-4 space-y-6 pb-20">
       
-      {/* ROOM TOP HEADER */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-card p-4 px-6 rounded-2xl border border-slate-800">
+      {/* ROOM TOP HEADER - ON AIR STATUS */}
+      <div className="flex items-center justify-between glass-card p-3 px-6 rounded-2xl border border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-3.5 h-3.5 rounded-full bg-emerald-400 animate-ping"></div>
-          <div>
-            <h1 className="text-base font-bold text-white flex items-center gap-2">
-              {sessionData?.title || "Real AI Interviewer Session (Live Camera & Mic)"}
-            </h1>
-            <span className="text-[11px] text-slate-400 font-mono">
-              Question {currentIdx + 1} of {questions.length} • Domain Focus: {currentQ.skill_focus}
-            </span>
-          </div>
+          <div className="w-3 h-3 rounded-full bg-red-500 animate-ping"></div>
+          <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            AI Interviewer <span className="text-[10px] text-cyan-400 font-mono font-normal">• Session Tape Active</span>
+          </span>
         </div>
 
         <div className="flex items-center gap-4">
-          <AudioWaveform isRecording={isRecording} />
-
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 font-mono text-xs text-indigo-400">
-            <Clock className="w-3.5 h-3.5" /> {formatTimer(timerSeconds)}
-          </div>
+          <span className="px-3 py-1 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-mono text-xs font-bold flex items-center gap-1.5">
+            ● ON AIR - {formatTimer(timerSeconds)}
+          </span>
         </div>
       </div>
 
-      {/* MAIN TWO COLUMN LAYOUT: WEBCAM CAMERA & AI INTERVIEWER AGENT */}
+      {/* MAIN TWO COLUMN LAYOUT MATCHING SCREENSHOT 1 & 3 */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* WEBCAM VIDEO CAMERA COLUMN (7 COLS) */}
-        <div className="lg:col-span-7 space-y-4">
-          <WebcamMonitor onMetricsUpdate={(m) => setVisionMetrics(m)} />
+        {/* CENTER COLUMN: AIRA AI INTERVIEWER CHARACTER (8 COLS) */}
+        <div className="lg:col-span-8 space-y-6 flex flex-col justify-between">
           
-          <div className="glass-card p-4 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-slate-300">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span className="font-mono text-[11px] font-semibold text-emerald-400">{micStatusText}</span>
-            </div>
+          {/* Animated AI Character Center Panel */}
+          <div className="glass-card p-8 rounded-3xl border border-slate-800 bg-slate-950/90 flex flex-col items-center justify-center text-center space-y-4 relative min-h-[320px]">
             
-            {isRecording ? (
-              <button
-                onClick={stopMicRecording}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500/30 transition-all flex items-center gap-1.5 animate-pulse"
-              >
-                <MicOff className="w-3.5 h-3.5" /> Pause Mic
-              </button>
-            ) : (
-              <button
-                onClick={startMicRecording}
-                className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-emerald-600 to-cyan-500 text-white shadow-lg shadow-emerald-500/25 hover:scale-105 transition-all flex items-center gap-1.5"
-              >
-                <Mic className="w-3.5 h-3.5" /> Start Speaking Answer
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* AI INTERVIEWER AGENT & CONVERSATIONAL COLUMN (5 COLS) */}
-        <div className="lg:col-span-5 flex flex-col justify-between glass-card p-6 rounded-3xl border border-slate-800 space-y-5">
-          
-          <div className="space-y-4">
-            
-            {/* AI INTERVIEWER AGENT COMPONENT */}
-            <AIInterviewerAgent 
-              isSpeaking={isSpeaking}
-              isListening={isRecording}
-              currentDialogue={aiDialogue}
-              currentQuestion={currentQ.question_text}
-            />
-
-            {/* Main AI Interview Question Card */}
-            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono text-cyan-400 uppercase font-bold">
-                  {currentQ.category} • {currentQ.difficulty} Question:
-                </span>
-                {isSpeaking && <span className="text-emerald-400 font-bold text-[10px] animate-pulse">🔊 Sarah Speaking...</span>}
+            {/* Glowing AI Ring */}
+            <div className={`w-28 h-28 rounded-full bg-gradient-to-tr from-indigo-600 via-cyan-400 to-emerald-400 p-1 shadow-2xl transition-all ${
+              isSpeaking ? 'animate-pulse ring-8 ring-cyan-500/30 scale-105' : ''
+            }`}>
+              <div className="w-full h-full bg-slate-950 rounded-full flex items-center justify-center text-cyan-400">
+                <Bot className="w-14 h-14" />
               </div>
-              <p className="text-sm font-semibold text-white leading-relaxed">
-                "{currentQ.question_text}"
+            </div>
+
+            <div>
+              <h2 className="text-base font-bold text-white tracking-wide">AIRA</h2>
+              <p className="text-xs font-mono text-cyan-400 mt-0.5">
+                {isSpeaking ? "AIRA is speaking..." : isRecording ? "AIRA is listening..." : "AIRA is evaluating response..."}
               </p>
             </div>
 
-            {/* AI SUGGESTED HIGH-SCORE ANSWER EXPANDER */}
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 overflow-hidden transition-all">
-              <button
-                onClick={() => setShowSampleAnswer(!showSampleAnswer)}
-                className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-semibold text-amber-400 hover:bg-amber-500/10 transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-amber-400" /> ✨ View AI High-Score Answer Hint
-                </span>
-                {showSampleAnswer ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
+            {/* Question Prompt Overlay */}
+            <div className="p-4 px-6 rounded-2xl bg-slate-900/90 border border-slate-800 max-w-xl text-xs text-slate-200 leading-relaxed font-sans shadow-lg">
+              "{currentQ.question_text}"
+            </div>
 
-              {showSampleAnswer && (
-                <div className="p-4 pt-2 border-t border-amber-500/20 space-y-3">
-                  <p className="text-xs text-slate-200 leading-relaxed font-sans bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                    "{currentQ.sample_answer || "Demonstrated comprehensive domain understanding with clear structured examples."}"
-                  </p>
-                  <button
-                    onClick={insertSampleAnswer}
-                    className="w-full py-2 rounded-xl text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" /> Auto-Fill High-Score Answer
-                  </button>
+            {/* Voiceover Replay Button */}
+            <div className="flex items-center gap-2">
+              {isSpeaking ? (
+                <button onClick={stopSpeaking} className="px-3 py-1.5 rounded-xl bg-red-500/20 text-red-400 text-xs font-semibold border border-red-500/30">
+                  Stop Voice
+                </button>
+              ) : (
+                <button onClick={speakQuestion} className="px-3 py-1.5 rounded-xl bg-indigo-600/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30 flex items-center gap-1">
+                  <Volume2 className="w-3.5 h-3.5 text-cyan-400" /> Replay Question Voice
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* LIVE TRANSCRIPT STREAM BOX (MATCHING SCREENSHOT 1) */}
+          <div className="glass-card p-5 rounded-3xl border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <span className="text-xs font-mono text-cyan-400 uppercase font-bold flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5" /> Live Transcript Stream
+              </span>
+              <span className="text-[10px] text-emerald-400 font-mono">Real-time STT Active</span>
+            </div>
+
+            <div className="space-y-3 max-h-44 overflow-y-auto pr-2 text-xs font-sans">
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                <span className="text-[10px] font-mono text-cyan-400 uppercase font-bold">AIRA (Interviewer):</span>
+                <p className="text-slate-200">{currentQ.question_text}</p>
+              </div>
+
+              {candidateAnswer && (
+                <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 space-y-1 ml-4">
+                  <span className="text-[10px] font-mono text-indigo-300 uppercase font-bold">YOU (Candidate):</span>
+                  <p className="text-slate-200">{candidateAnswer}</p>
                 </div>
               )}
             </div>
-
           </div>
 
-          {/* Real-time Spoken Answer Transcript & Next Question Action */}
-          <div className="space-y-3 flex-1 flex flex-col justify-end">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-300 font-semibold flex items-center gap-1.5">
-                <Mic className="w-3.5 h-3.5 text-cyan-400" /> Spoken Answer Transcript:
-              </span>
-              
-              <button
-                onClick={insertSampleAnswer}
-                className="text-[11px] text-indigo-400 hover:underline flex items-center gap-1 font-mono"
-              >
-                <Edit3 className="w-3 h-3" /> Auto-Fill Text
-              </button>
+        </div>
+
+        {/* RIGHT COLUMN: CANDIDATE WEBCAM & LIVE TELEMETRY BARS (4 COLS MATCHING SCREENSHOT 1 & 3) */}
+        <div className="lg:col-span-4 space-y-4">
+          
+          {/* Candidate Webcam Box */}
+          <div className="relative rounded-3xl overflow-hidden glass-card border border-slate-800 bg-slate-950 aspect-video shadow-2xl">
+            <WebcamMonitor onMetricsUpdate={(m) => setVisionMetrics(prev => ({ ...prev, ...m }))} />
+            <div className="absolute top-3 left-3 bg-red-500 px-2.5 py-0.5 rounded-md text-[10px] font-bold text-white uppercase font-mono">
+              ON SCREEN
+            </div>
+          </div>
+
+          {/* LIVE TELEMETRY BARS (MATCHING SCREENSHOT 1 & 3) */}
+          <div className="glass-card p-5 rounded-3xl border border-slate-800 space-y-3.5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <span className="text-xs font-mono text-slate-300 font-bold uppercase">Live Vision Telemetry</span>
+              <span className="text-[10px] font-mono text-emerald-400">FACE ASSESSMENT - LIVE</span>
             </div>
 
-            <textarea
-              rows={3}
-              value={candidateAnswer}
-              onChange={(e) => setCandidateAnswer(e.target.value)}
-              placeholder="Speak your answer aloud into your microphone (words transcribe live on screen as you talk)..."
-              className="w-full p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-indigo-500 transition-all resize-none font-sans"
-            />
+            {/* Metric 1: Eye Contact */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px] font-mono">
+                <span className="text-slate-400">Eye Contact</span>
+                <span className="text-cyan-400 font-bold">90%</span>
+              </div>
+              <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                <div className="bg-cyan-400 h-full rounded-full transition-all duration-300" style={{ width: '90%' }} />
+              </div>
+            </div>
 
-            {!isRecording && (
-              <button
-                onClick={startMicRecording}
-                className="w-full py-2.5 rounded-xl text-xs font-semibold bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 transition-all flex items-center justify-center gap-1.5"
-              >
-                <Mic className="w-4 h-4" /> 🎙️ Click Here to Speak Your Answer
-              </button>
-            )}
+            {/* Metric 2: Attention */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px] font-mono">
+                <span className="text-slate-400">Attention</span>
+                <span className="text-indigo-400 font-bold">100%</span>
+              </div>
+              <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                <div className="bg-indigo-400 h-full rounded-full transition-all duration-300" style={{ width: '100%' }} />
+              </div>
+            </div>
 
-            <button
-              onClick={handleNextQuestion}
-              disabled={submitting}
-              className="w-full py-3 rounded-2xl font-bold text-xs bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-xl shadow-indigo-500/25 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
-            >
-              {submitting ? "Analyzing Conversational Speech & Posture..." : (
-                currentIdx < questions.length - 1 ? (
-                  <>Submit Spoken Answer & Next Question <ArrowRight className="w-4 h-4" /></>
-                ) : (
-                  <>Finish Interview & Generate AI Assessment Report <CheckCircle2 className="w-4 h-4" /></>
-                )
-              )}
-            </button>
+            {/* Metric 3: Confidence */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px] font-mono">
+                <span className="text-slate-400">Confidence</span>
+                <span className="text-emerald-400 font-bold">78%</span>
+              </div>
+              <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-400 h-full rounded-full transition-all duration-300" style={{ width: '78%' }} />
+              </div>
+            </div>
+
+            {/* Metric 4: Face Presence */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-[11px] font-mono">
+                <span className="text-slate-400">Face Presence</span>
+                <span className="text-purple-400 font-bold">100%</span>
+              </div>
+              <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                <div className="bg-purple-400 h-full rounded-full transition-all duration-300" style={{ width: '100%' }} />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-800 flex justify-between text-[11px] font-mono text-slate-400">
+              <span>Emotion Detector:</span>
+              <span className="text-emerald-400 font-bold">Neutral / Focused</span>
+            </div>
           </div>
 
+          {/* AI SAMPLE ANSWER EXPANDER */}
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+            <button
+              onClick={() => setShowSampleAnswer(!showSampleAnswer)}
+              className="w-full text-xs font-semibold text-amber-400 flex items-center justify-between"
+            >
+              <span className="flex items-center gap-1.5">
+                <Lightbulb className="w-4 h-4" /> ✨ View AI High-Score Answer
+              </span>
+              {showSampleAnswer ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+
+            {showSampleAnswer && (
+              <div className="pt-2 space-y-2 text-xs text-slate-300">
+                <p className="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-[11px] leading-relaxed font-sans">
+                  "{currentQ.sample_answer}"
+                </p>
+                <button
+                  onClick={insertSampleAnswer}
+                  className="w-full py-1.5 rounded-xl bg-amber-500/20 text-amber-300 text-[11px] font-semibold border border-amber-500/40"
+                >
+                  Auto-Fill This Answer
+                </button>
+              </div>
+            )}
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* BOTTOM CONTROL BAR MATCHING SCREENSHOT 1 */}
+      <div className="glass-card p-4 rounded-3xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsRecording(!isRecording)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+              isRecording ? 'bg-slate-900 text-slate-200 border-slate-800' : 'bg-red-500/20 text-red-400 border-red-500/40'
+            }`}
+          >
+            <Mic className="w-4 h-4 text-cyan-400" /> {isRecording ? "Mute Mic" : "Unmute Mic"}
+          </button>
+          
+          <span className="text-xs text-slate-400 font-mono">Camera: <span className="text-emerald-400 font-bold">Active</span></span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={insertSampleAnswer}
+            className="px-4 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-semibold transition-all"
+          >
+            Auto-Fill Text
+          </button>
+
+          <button
+            onClick={handleNextQuestion}
+            disabled={submitting}
+            className="px-6 py-2.5 rounded-xl font-bold text-xs bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/25 transition-all flex items-center gap-2"
+          >
+            {submitting ? "Analyzing..." : (
+              currentIdx < questions.length - 1 ? (
+                <>Submit Answer & Next Question <ArrowRight className="w-4 h-4" /></>
+              ) : (
+                <>End Interview & View Report <PhoneOff className="w-4 h-4" /></>
+              )
+            )}
+          </button>
         </div>
 
       </div>

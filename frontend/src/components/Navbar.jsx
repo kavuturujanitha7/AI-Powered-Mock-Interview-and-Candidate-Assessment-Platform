@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Video, FileText, BarChart2, LogOut } from 'lucide-react';
+import { Sparkles, Video, FileText, BarChart2, Award, LogOut } from 'lucide-react';
 import { getStoredUser, removeStoredToken } from '../services/api';
 
 export default function Navbar({ activePage, setActivePage }) {
@@ -13,13 +13,13 @@ export default function Navbar({ activePage, setActivePage }) {
 
   return (
     <header className="sticky top-0 z-50 glass-card border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-4">
           
           {/* Brand Logo */}
           <div 
             onClick={() => setActivePage('landing')} 
-            className="flex items-center gap-3 cursor-pointer group shrink-0"
+            className="flex items-center gap-2.5 cursor-pointer group shrink-0"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-cyan-500 to-emerald-400 p-0.5 shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
               <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
@@ -27,18 +27,18 @@ export default function Navbar({ activePage, setActivePage }) {
               </div>
             </div>
             <div>
-              <span className="text-lg font-bold font-display tracking-tight text-white flex items-center gap-1.5">
+              <span className="text-base font-bold font-display tracking-tight text-white flex items-center gap-1">
                 SmartHire <span className="text-gradient">AI</span>
               </span>
               <span className="text-[9px] text-slate-400 block tracking-wide font-mono uppercase">AI Mock Interview Platform</span>
             </div>
           </div>
 
-          {/* Evenly Spanned 4 Navigation Tabs - Perfectly Filling Space with Zero Gaps */}
-          <nav className="hidden md:flex flex-1 max-w-xl items-center justify-center bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800/80 shadow-inner">
+          {/* Clean 5 Navigation Pills - Home, Candidate Hub, Resume AI, Mock Interview, AI Reports */}
+          <nav className="hidden md:flex items-center gap-1 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800/80 shadow-inner">
             <button
               onClick={() => setActivePage('landing')}
-              className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-semibold text-center transition-all ${
+              className={`px-4 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 activePage === 'landing' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -46,7 +46,7 @@ export default function Navbar({ activePage, setActivePage }) {
             </button>
             <button
               onClick={() => setActivePage('candidate-dashboard')}
-              className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 text-center transition-all ${
+              className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activePage === 'candidate-dashboard' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -54,7 +54,7 @@ export default function Navbar({ activePage, setActivePage }) {
             </button>
             <button
               onClick={() => setActivePage('resume-upload')}
-              className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 text-center transition-all ${
+              className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activePage === 'resume-upload' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -62,11 +62,19 @@ export default function Navbar({ activePage, setActivePage }) {
             </button>
             <button
               onClick={() => setActivePage('interview-setup')}
-              className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 text-center transition-all ${
+              className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
                 activePage === 'interview-setup' || activePage === 'interview-room' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
               <Video className="w-3.5 h-3.5" /> Mock Interview
+            </button>
+            <button
+              onClick={() => setActivePage('interview-report')}
+              className={`px-4 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                activePage === 'interview-report' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+              }`}
+            >
+              <Award className="w-3.5 h-3.5 text-emerald-400" /> AI Reports
             </button>
           </nav>
 
@@ -92,13 +100,13 @@ export default function Navbar({ activePage, setActivePage }) {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setActivePage('login')}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900 transition-all"
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-900 transition-all"
                 >
                   Log In
                 </button>
                 <button
                   onClick={() => setActivePage('register')}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-md hover:opacity-90 transition-all"
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-600 to-cyan-500 text-white shadow-md hover:opacity-90 transition-all"
                 >
                   Register
                 </button>
