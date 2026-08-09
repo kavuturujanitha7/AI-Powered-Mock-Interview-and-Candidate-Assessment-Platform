@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { UserCheck, Users, Award, Search, ArrowUpRight, CheckCircle2, Sliders } from 'lucide-react';
+import { UserCheck, Users, Award, Search, ArrowUpRight, CheckCircle2, Sliders, BarChart2, Shield } from 'lucide-react';
 import { fetchRecruiterAnalytics } from '../services/api';
 
 export default function RecruiterDashboard({ setActivePage }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSubTab, setActiveSubTab] = useState('user-management'); // user-management, interview-management, analytics-dashboard, reports
 
   useEffect(() => {
     async function load() {
@@ -19,7 +20,7 @@ export default function RecruiterDashboard({ setActivePage }) {
   if (loading || !data) {
     return (
       <div className="py-20 text-center text-slate-400 font-mono text-xs animate-pulse">
-        Loading Recruiter Candidate Evaluation Analytics...
+        Loading Admin / Recruiter Interface Telemetry...
       </div>
     );
   }
@@ -32,14 +33,14 @@ export default function RecruiterDashboard({ setActivePage }) {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 pb-20">
       
-      {/* HEADER BAR */}
+      {/* EXPLICIT HEADER FOR ADMIN / RECRUITER INTERFACE */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-card p-6 rounded-3xl border border-slate-800">
         <div>
-          <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono mb-1">
-            <UserCheck className="w-4 h-4" /> Recruiter & Hiring Manager Workspace
+          <div className="flex items-center gap-2 text-indigo-400 text-xs font-mono mb-1">
+            <Shield className="w-4 h-4" /> Admin / Recruiter Interface
           </div>
-          <h1 className="text-2xl font-bold font-display text-white">Candidate Evaluation Matrix</h1>
-          <p className="text-xs text-slate-400">Compare candidate mock interview scores and AI assessment readiness</p>
+          <h1 className="text-2xl font-bold font-display text-white">Management & Analytics Workspace</h1>
+          <p className="text-xs text-slate-400">User Management, Interview Management, Analytics Dashboard & Reports</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -47,7 +48,7 @@ export default function RecruiterDashboard({ setActivePage }) {
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
             <input
               type="text"
-              placeholder="Search candidate name..."
+              placeholder="Search candidate or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-cyan-500"
@@ -56,12 +57,51 @@ export default function RecruiterDashboard({ setActivePage }) {
         </div>
       </div>
 
-      {/* OVERVIEW STATS */}
+      {/* 4 EXPLICIT SUB-MODULE TABS FROM ARCHITECTURE DIAGRAM */}
+      <div className="flex items-center gap-2 border-b border-slate-800 pb-2 overflow-x-auto text-xs font-semibold">
+        <button
+          onClick={() => setActiveSubTab('user-management')}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+            activeSubTab === 'user-management' ? 'bg-indigo-600 text-white font-bold shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" /> 1. User Management
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('interview-management')}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+            activeSubTab === 'interview-management' ? 'bg-indigo-600 text-white font-bold shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          <Sliders className="w-3.5 h-3.5" /> 2. Interview Management
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('analytics-dashboard')}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+            activeSubTab === 'analytics-dashboard' ? 'bg-indigo-600 text-white font-bold shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          <BarChart2 className="w-3.5 h-3.5" /> 3. Analytics Dashboard
+        </button>
+
+        <button
+          onClick={() => setActivePage('interview-report')}
+          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+            activeSubTab === 'reports' ? 'bg-indigo-600 text-white font-bold shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          <Award className="w-3.5 h-3.5 text-emerald-400" /> 4. Reports
+        </button>
+      </div>
+
+      {/* OVERVIEW STATS / ANALYTICS DASHBOARD */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
           <span className="text-xs font-semibold text-slate-400 block">Total Evaluated Candidates</span>
           <div className="text-3xl font-extrabold text-white">{data.total_candidates}</div>
-          <span className="text-[11px] text-cyan-400">Active Candidates</span>
+          <span className="text-[11px] text-cyan-400">User Management Active</span>
         </div>
 
         <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-2">
@@ -77,9 +117,12 @@ export default function RecruiterDashboard({ setActivePage }) {
         </div>
       </div>
 
-      {/* CANDIDATE EVALUATION TABLE */}
+      {/* CANDIDATE EVALUATION TABLE / INTERVIEW MANAGEMENT */}
       <div className="glass-card p-6 rounded-3xl border border-slate-800 space-y-4">
-        <h2 className="text-lg font-bold text-white">Candidate Assessment Directory</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white">User & Interview Management Directory</h2>
+          <span className="text-xs font-mono text-cyan-400">Total Records: {filteredCandidates.length}</span>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
