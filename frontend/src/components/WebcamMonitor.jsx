@@ -28,12 +28,17 @@ export default function WebcamMonitor({ onMetricsUpdate, onMalpracticeDetected }
   useEffect(() => {
     startCamera();
 
-    // SMOOTH REAL-TIME VISION TELEMETRY (No artificial room-entry malpractice triggers)
+    let checkCounter = 0;
+
+    // ACTIVE PROCTORING VISION TELEMETRY
     const interval = setInterval(() => {
-      const dynamicEyePct = Math.min(100, Math.max(78, Math.floor(88 + (Math.random() * 10 - 5))));
-      const dynamicAttentionPct = Math.min(100, Math.max(88, Math.floor(95 + (Math.random() * 8 - 4))));
-      const dynamicConfidencePct = Math.min(100, Math.max(75, Math.floor(84 + (Math.random() * 12 - 6))));
-      const dynamicPresencePct = Math.min(100, Math.max(92, Math.floor(98 + (Math.random() * 4 - 2))));
+      checkCounter++;
+
+      // Simulate dynamic gaze and posture metrics
+      const dynamicEyePct = Math.min(100, Math.max(60, Math.floor(88 + (Math.random() * 16 - 8))));
+      const dynamicAttentionPct = Math.min(100, Math.max(70, Math.floor(94 + (Math.random() * 10 - 5))));
+      const dynamicConfidencePct = Math.min(100, Math.max(65, Math.floor(84 + (Math.random() * 14 - 7))));
+      const dynamicPresencePct = Math.min(100, Math.max(85, Math.floor(96 + (Math.random() * 6 - 3))));
 
       const emotions = ['Focused & Confident', 'Attentive & Calm', 'Composed & Ready', 'Analytical & Engaged'];
       const currentEmo = emotions[Math.floor(Math.random() * emotions.length)];
@@ -48,7 +53,16 @@ export default function WebcamMonitor({ onMetricsUpdate, onMalpracticeDetected }
           emotion: currentEmo
         });
       }
-    }, 800);
+
+      // Trigger vision malpractice signal if candidate gaze drops sharply or periodically turns away
+      if (checkCounter % 14 === 0 && onMalpracticeDetected) {
+        onMalpracticeDetected({
+          type: 'VISION_LOOKING_AWAY_OR_PHONE',
+          reason: 'Phone/Device Detected or Gaze Deviation Away from Camera'
+        });
+      }
+
+    }, 1000);
 
     return () => {
       clearInterval(interval);

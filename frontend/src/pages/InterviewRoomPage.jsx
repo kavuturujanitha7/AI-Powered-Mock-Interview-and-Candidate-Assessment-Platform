@@ -26,7 +26,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
 
   const recognitionRef = useRef(null);
 
-  // REAL COMPANY INTERVIEW QUESTION FLOW (Starts with Introduction -> Core Domain -> Practical Scenario)
+  // REAL COMPANY INTERVIEW QUESTION FLOW
   const domainQuestionsBank = {
     "AI / ML & Data Science": [
       {
@@ -155,22 +155,22 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     return () => clearInterval(timer);
   }, []);
 
-  // PROCTORING HANDLER: 1ST TIME = WARNING TOAST, 2ND TIME = AUTO-CANCEL ENTIRE EXAM
+  // PROCTORING VIOLATION HANDLER: 1ST VIOLATION = WARNING TOAST, 2ND VIOLATION = AUTO-TERMINATE & REDIRECT TO REPORT
   const triggerProctoringViolation = (reasonText) => {
     setViolationCount(prev => {
       const nextCount = prev + 1;
 
       if (nextCount === 1) {
-        // 1st Time Violation -> Display Warning Toast
+        // 1st Violation -> Display Warning Toast
         setActivePopup({
-          text: `🚨 MALPRACTICE WARNING (1/2): ${reasonText}! Correct position immediately.`,
+          text: `🚨 PROCTORING WARNING (1/2): ${reasonText}! Correct posture / remove device immediately.`,
           color: "bg-red-600/95 border-red-400 text-white font-bold"
         });
         setTimeout(() => setActivePopup(null), 5000);
       } else if (nextCount >= 2) {
-        // 2nd Time Violation -> AUTO-CANCEL ENTIRE EXAM & REDIRECT TO REPORT
+        // 2nd Violation -> AUTO-TERMINATE EXAM & REDIRECT TO REPORT
         setActivePopup({
-          text: "🚨 EXAM CANCELLED (2/2 VIOLATIONS): Session auto-terminated due to multiple malpractice violations.",
+          text: "🚨 EXAM TERMINATED (2/2 VIOLATIONS): Session automatically cancelled due to proctoring violations.",
           color: "bg-red-700 border-red-500 text-white font-extrabold"
         });
         handleForceMalpracticeSubmit(reasonText);
@@ -180,17 +180,22 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     });
   };
 
-  // Tab switch listener ONLY
+  // Tab switch listener
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        triggerProctoringViolation("Browser Tab Switch Detected");
+        triggerProctoringViolation("Tab Switching Detected");
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
+
+  // Handle webcam malpractice detection callback
+  const handleVisionMalpractice = (data) => {
+    triggerProctoringViolation(data.reason || "Phone/Device Detected or Gaze Deviation");
+  };
 
   const handleForceMalpracticeSubmit = async (reasonText) => {
     stopSpeaking();
@@ -201,39 +206,19 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     
     const malpracticeReport = {
       ...report,
-      overall_score: 38.0,
-      performance_rating: "EXAM CANCELLED - Malpractice Penalty Applied",
+      overall_score: 35.0,
+      performance_rating: "EXAM TERMINATED - Malpractice Penalty Applied",
       malpractice_flag: true,
       tab_switches: violationCount + 1,
-      strengths: ["Initial setup completed"],
-      weaknesses: [`Session Auto-Cancelled: Multiple Proctoring Violations (${reasonText})`],
-      improvement_tips: ["Do not switch tabs, use phone devices, or turn away from the camera during live interviews."]
+      strengths: ["Initial webcam and microphone engagement recorded"],
+      weaknesses: [`EXAM AUTO-TERMINATED: 2 Proctoring Violations Recorded (${reasonText})`],
+      improvement_tips: ["Do not switch tabs, use phone devices, or turn away from the camera during live proctored interviews."]
     };
 
     setFinalReport(malpracticeReport);
     setSubmitting(false);
     setActivePage('interview-report');
   };
-
-  // TRIGGER REAL-TIME AI TELEMETRY POP-UP TOASTS
-  useEffect(() => {
-    const warningPopups = [
-      { text: "⚠️ AI Vision Proctoring: Keep face centered & avoid looking away!", color: "bg-amber-500/20 border-amber-500/40 text-amber-300" },
-      { text: "🎙️ Speech Telemetry: Clear audio stream & steady speaking pace (138 WPM).", color: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300" },
-      { text: "🛡️ Anti-Cheat Active: 2nd violation auto-cancels the entire exam!", color: "bg-red-500/20 border-red-500/40 text-red-300" }
-    ];
-
-    const popupInterval = setInterval(() => {
-      const randomPopup = warningPopups[Math.floor(Math.random() * warningPopups.length)];
-      setActivePopup(randomPopup);
-
-      setTimeout(() => {
-        setActivePopup(null);
-      }, 4000);
-    }, 11000);
-
-    return () => clearInterval(popupInterval);
-  }, []);
 
   // Web Speech Synthesis (AIRA Voiceover)
   const speakQuestion = () => {
@@ -497,6 +482,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
           {/* Candidate Webcam Box */}
           <WebcamMonitor 
             onMetricsUpdate={(m) => setTelemetry(prev => ({ ...prev, ...m }))}
+            onMalpracticeDetected={handleVisionMalpractice}
           />
 
           {/* DYNAMIC LIVE TELEMETRY BARS */}
