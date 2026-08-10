@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Video, Mic, MicOff, Volume2, Clock, ArrowRight, CheckCircle2, AlertCircle, RefreshCw, Send, Sparkles, VolumeX, Edit3, Lightbulb, ChevronDown, ChevronUp, Bot, User, MessageSquare, PhoneOff, Bell } from 'lucide-react';
+import { Video, Mic, MicOff, Volume2, Clock, ArrowRight, CheckCircle2, AlertCircle, RefreshCw, Send, Sparkles, VolumeX, Bot, User, MessageSquare, PhoneOff, Bell, AlertTriangle, ShieldAlert } from 'lucide-react';
 import WebcamMonitor from '../components/WebcamMonitor';
 import AudioWaveform from '../components/AudioWaveform';
 import { submitQuestionAnswer, finishInterviewSession } from '../services/api';
@@ -9,10 +9,10 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   const [candidateAnswer, setCandidateAnswer] = useState('');
   const [isRecording, setIsRecording] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [showSampleAnswer, setShowSampleAnswer] = useState(true); // Open by default for easy reading
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [activePopup, setActivePopup] = useState(null);
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [candidateAnswersList, setCandidateAnswersList] = useState([]);
   
   // DYNAMIC LIVE TELEMETRY STATE
@@ -26,7 +26,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
 
   const recognitionRef = useRef(null);
 
-  // EXACT 3 HIGH-IMPACT NON-REPEATING DOMAIN QUESTIONS & SAMPLE ANSWERS TO READ ALOUD
+  // EXACT 3 NON-REPEATING DOMAIN QUESTIONS
   const domainQuestionsBank = {
     "Backend Engineering": [
       {
@@ -50,29 +50,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
         question_text: "Q3: Discuss your strategy for securing REST APIs using JWT access tokens, refresh tokens, rate limiting, and CORS security headers.",
         sample_answer: "I issue short-lived JWT access tokens in authorization headers, store refresh tokens in HTTP-only cookies, apply rate limiting via Redis, and enforce strict CORS origins."
       }
-    ],
-    "Cloud & DevOps": [
-      {
-        id: 1,
-        question_number: "Question 1 of 3",
-        skill_focus: "Docker & CI/CD Pipelines",
-        question_text: "Q1: Describe your workflow for writing multi-stage Dockerfiles and automating CI/CD build pipelines using GitHub Actions.",
-        sample_answer: "I write multi-stage Dockerfiles to minimize container image sizes and build automated GitHub Actions workflows for linting, testing, and container deployment."
-      },
-      {
-        id: 2,
-        question_number: "Question 2 of 3",
-        skill_focus: "Kubernetes & Infrastructure as Code",
-        question_text: "Q2: How do you manage infrastructure provisioning using Terraform and orchestrate zero-downtime rolling updates in Kubernetes?",
-        sample_answer: "I define cloud resources with Terraform code modules and execute zero-downtime rolling updates in Kubernetes using readiness and liveness health probes."
-      },
-      {
-        id: 3,
-        question_number: "Question 3 of 3",
-        skill_focus: "Centralized Monitoring & Logging",
-        question_text: "Q3: How do you set up centralized logging and metrics monitoring using Prometheus, Grafana, and ELK Stack for cloud microservices?",
-        sample_answer: "I aggregate log streams via Fluentd into Elasticsearch, monitor service metrics using Prometheus scrapers, and build alert dashboards in Grafana."
-      }
     ]
   };
 
@@ -86,21 +63,72 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     return () => clearInterval(timer);
   }, []);
 
-  // Trigger Live AI Pop-up Toast Notifications (Max 2-3 alerts before auto-wrap)
+  // ANTI-MALPRACTICE & TAB-SWITCH PROCTORING MONITOR
   useEffect(() => {
-    const popups = [
-      { text: "🔔 AI Assessment: Excellent Eye-Contact (91%)! Keep speaking naturally.", color: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300" },
-      { text: "🎙️ Speech Telemetry: Optimal pace (138 WPM). Zero filler words detected!", color: "bg-emerald-500/20 border-emerald-500/40 text-emerald-300" }
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setTabSwitchCount(prev => {
+          const newCount = prev + 1;
+          
+          if (newCount === 1) {
+            setActivePopup({
+              text: "🚨 MALPRACTICE WARNING (1/2): Tab switch detected! Return to interview room immediately.",
+              color: "bg-red-600/30 border-red-500 text-red-200"
+            });
+            setTimeout(() => setActivePopup(null), 5000);
+          } else if (newCount >= 2) {
+            // AUTO-TERMINATE INTERVIEW ON 2ND TAB SWITCH
+            handleForceMalpracticeSubmit();
+          }
+
+          return newCount;
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  const handleForceMalpracticeSubmit = async () => {
+    stopSpeaking();
+    stopMicRecording();
+    setSubmitting(true);
+
+    const report = await finishInterviewSession(sessionData?.session_id || 1);
+    
+    const malpracticeReport = {
+      ...report,
+      overall_score: 45.0,
+      performance_rating: "Malpractice Penalty - Session Terminated",
+      malpractice_flag: true,
+      tab_switches: tabSwitchCount + 1,
+      strengths: ["Initial webcam and microphone engagement recorded"],
+      weaknesses: ["Multiple browser tab switches detected during live proctoring"],
+      improvement_tips: ["Maintain focus on the interview tab without switching windows."]
+    };
+
+    setFinalReport(malpracticeReport);
+    setSubmitting(false);
+    setActivePage('interview-report');
+  };
+
+  // TRIGGER REAL-TIME AI WARNING POP-UP TOASTS
+  useEffect(() => {
+    const warningPopups = [
+      { text: "⚠️ AI Vision Warning: Please maintain direct eye contact with the camera!", color: "bg-amber-500/20 border-amber-500/40 text-amber-300" },
+      { text: "🎙️ Speech Telemetry: Clear audio stream & steady speaking pace (138 WPM).", color: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300" },
+      { text: "🛡️ Anti-Cheat Proctoring: Camera & Tab focus active.", color: "bg-emerald-500/20 border-emerald-500/40 text-emerald-300" }
     ];
 
     const popupInterval = setInterval(() => {
-      const randomPopup = popups[Math.floor(Math.random() * popups.length)];
+      const randomPopup = warningPopups[Math.floor(Math.random() * warningPopups.length)];
       setActivePopup(randomPopup);
 
       setTimeout(() => {
         setActivePopup(null);
-      }, 3500);
-    }, 10000);
+      }, 4000);
+    }, 11000);
 
     return () => clearInterval(popupInterval);
   }, []);
@@ -132,7 +160,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   };
 
   useEffect(() => {
-    setShowSampleAnswer(true);
     const timeout = setTimeout(() => {
       speakQuestion();
     }, 400);
@@ -201,10 +228,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     }
   };
 
-  const insertSampleAnswer = () => {
-    setCandidateAnswer(currentQ.sample_answer);
-  };
-
   const formatTimer = (secs) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
@@ -239,12 +262,10 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
 
     setCandidateAnswer('');
     
-    // Auto-finish after 3 questions (or if last question reached)
     if (currentIdx < 2) {
       setCurrentIdx(prev => prev + 1);
       setSubmitting(false);
     } else {
-      // AUTO CLOSE INTERVIEW AFTER 3 QUESTIONS & GENERATE REPORT
       const report = await finishInterviewSession(sessionData?.session_id || 1);
       
       const fullCustomReport = {
@@ -261,10 +282,10 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   return (
     <div className="max-w-7xl mx-auto px-4 py-4 space-y-6 pb-20 relative">
       
-      {/* REAL-TIME AI POP-UP TOAST NOTIFICATION */}
+      {/* REAL-TIME AI PROCTORING & WARNING POP-UP TOAST */}
       {activePopup && (
         <div className={`fixed top-20 right-6 z-50 p-4 rounded-2xl border ${activePopup.color} shadow-2xl backdrop-blur-xl animate-bounce flex items-center gap-3`}>
-          <Bell className="w-5 h-5 text-cyan-400 shrink-0" />
+          <ShieldAlert className="w-5 h-5 text-red-400 shrink-0" />
           <span className="text-xs font-semibold">{activePopup.text}</span>
         </div>
       )}
@@ -284,6 +305,12 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
         </div>
 
         <div className="flex items-center gap-3">
+          {tabSwitchCount > 0 && (
+            <span className="px-3 py-1 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 font-mono text-xs font-bold flex items-center gap-1">
+              🚨 Tab Switch Warning: {tabSwitchCount}/2
+            </span>
+          )}
+
           <span className="px-3 py-1 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-mono text-xs font-bold flex items-center gap-1.5">
             ● ON AIR - {formatTimer(timerSeconds)}
           </span>
@@ -428,26 +455,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
             </div>
           </div>
 
-          {/* HIGH-SCORE SAMPLE ANSWER TO SPEAK OUT LOUD (ALWAYS VISIBLE FOR USER TO READ) */}
-          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 space-y-2">
-            <div className="flex items-center justify-between text-xs font-bold text-amber-300">
-              <span className="flex items-center gap-1.5">
-                <Lightbulb className="w-4 h-4 text-amber-400" /> ✨ High-Score Answer to Speak Aloud:
-              </span>
-            </div>
-
-            <p className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-100 leading-relaxed font-sans font-medium">
-              "{currentQ.sample_answer}"
-            </p>
-
-            <button
-              onClick={insertSampleAnswer}
-              className="w-full py-2 rounded-xl bg-amber-500/30 hover:bg-amber-500/40 text-amber-200 text-xs font-bold border border-amber-500/50 flex items-center justify-center gap-1.5 transition-all"
-            >
-              <Edit3 className="w-3.5 h-3.5" /> 1-Click Auto-Fill Answer
-            </button>
-          </div>
-
         </div>
 
       </div>
@@ -469,13 +476,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={insertSampleAnswer}
-            className="px-4 py-2 rounded-xl bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/30 text-indigo-300 hover:text-white text-xs font-semibold transition-all"
-          >
-            Auto-Fill Text
-          </button>
-
           <button
             onClick={handleNextQuestion}
             disabled={submitting}
