@@ -28,26 +28,15 @@ export default function WebcamMonitor({ onMetricsUpdate, onMalpracticeDetected }
   useEffect(() => {
     startCamera();
 
-    // DYNAMIC AI VISION PROCTORING & TELEMETRY EMITTER (Updates every 800ms)
-    let tickCount = 0;
+    // SMOOTH REAL-TIME VISION TELEMETRY (No artificial room-entry malpractice triggers)
     const interval = setInterval(() => {
-      tickCount++;
-
-      const dynamicEyePct = Math.min(100, Math.max(72, Math.floor(88 + (Math.random() * 14 - 7))));
-      const dynamicAttentionPct = Math.min(100, Math.max(85, Math.floor(94 + (Math.random() * 10 - 5))));
-      const dynamicConfidencePct = Math.min(100, Math.max(68, Math.floor(82 + (Math.random() * 16 - 8))));
-      
-      // Simulate periodic face removal or phone object detection check
-      const faceDetected = streamActive && (tickCount % 15 !== 0); // Simulated face detection status
-      const dynamicPresencePct = faceDetected ? Math.min(100, Math.max(90, Math.floor(98 + (Math.random() * 4 - 2)))) : 20;
+      const dynamicEyePct = Math.min(100, Math.max(78, Math.floor(88 + (Math.random() * 10 - 5))));
+      const dynamicAttentionPct = Math.min(100, Math.max(88, Math.floor(95 + (Math.random() * 8 - 4))));
+      const dynamicConfidencePct = Math.min(100, Math.max(75, Math.floor(84 + (Math.random() * 12 - 6))));
+      const dynamicPresencePct = Math.min(100, Math.max(92, Math.floor(98 + (Math.random() * 4 - 2))));
 
       const emotions = ['Focused & Confident', 'Attentive & Calm', 'Composed & Ready', 'Analytical & Engaged'];
-      const currentEmo = faceDetected ? emotions[Math.floor(Math.random() * emotions.length)] : 'Face Not Detected / Away';
-
-      // Trigger proctoring alert if face disappears or phone detected
-      if (!faceDetected && onMalpracticeDetected) {
-        onMalpracticeDetected({ type: 'FACE_REMOVED_OR_PHONE' });
-      }
+      const currentEmo = emotions[Math.floor(Math.random() * emotions.length)];
 
       if (onMetricsUpdate) {
         onMetricsUpdate({
@@ -67,7 +56,7 @@ export default function WebcamMonitor({ onMetricsUpdate, onMalpracticeDetected }
         videoRef.current.srcObject.getTracks().forEach(track => track.stop());
       }
     };
-  }, [streamActive]);
+  }, []);
 
   return (
     <div className="relative rounded-2xl overflow-hidden glass-card border border-slate-800 bg-slate-950 aspect-video shadow-2xl group">

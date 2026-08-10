@@ -26,7 +26,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
 
   const recognitionRef = useRef(null);
 
-  // EXACT 3 NON-REPEATING DOMAIN QUESTIONS
+  // STRICT 100% DOMAIN-SPECIFIC NON-REPEATING QUESTION BANK FOR EVERY ROLE
   const domainQuestionsBank = {
     "Backend Engineering": [
       {
@@ -50,6 +50,121 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
         question_text: "Q3: Discuss your strategy for securing REST APIs using JWT access tokens, refresh tokens, rate limiting, and CORS security headers.",
         sample_answer: "I issue short-lived JWT access tokens in authorization headers, store refresh tokens in HTTP-only cookies, apply rate limiting via Redis, and enforce strict CORS origins."
       }
+    ],
+    "Cloud & DevOps": [
+      {
+        id: 1,
+        question_number: "Question 1 of 3",
+        skill_focus: "Docker & CI/CD Pipelines",
+        question_text: "Q1: Describe your workflow for writing multi-stage Dockerfiles and automating CI/CD build pipelines using GitHub Actions.",
+        sample_answer: "I write multi-stage Dockerfiles to minimize container image sizes and build automated GitHub Actions workflows for linting, testing, and container deployment."
+      },
+      {
+        id: 2,
+        question_number: "Question 2 of 3",
+        skill_focus: "Kubernetes & Infrastructure as Code",
+        question_text: "Q2: How do you manage infrastructure provisioning using Terraform and orchestrate zero-downtime rolling updates in Kubernetes?",
+        sample_answer: "I define cloud resources with Terraform code modules and execute zero-downtime rolling updates in Kubernetes using readiness and liveness health probes."
+      },
+      {
+        id: 3,
+        question_number: "Question 3 of 3",
+        skill_focus: "Centralized Monitoring & Logging",
+        question_text: "Q3: How do you set up centralized logging and metrics monitoring using Prometheus, Grafana, and ELK Stack for cloud microservices?",
+        sample_answer: "I aggregate log streams via Fluentd into Elasticsearch, monitor service metrics using Prometheus scrapers, and build alert dashboards in Grafana."
+      }
+    ],
+    "Data Science & AI/ML": [
+      {
+        id: 1,
+        question_number: "Question 1 of 3",
+        skill_focus: "LLM RAG Pipelines & Vector DBs",
+        question_text: "Q1: Explain how Retrieval-Augmented Generation (RAG) works using vector databases (Pinecone/ChromaDB) and Transformer embedding models.",
+        sample_answer: "RAG converts unstructured documents into vector embeddings using transformer models, indexes vectors in ChromaDB, and injects retrieved context into LLM prompts."
+      },
+      {
+        id: 2,
+        question_number: "Question 2 of 3",
+        skill_focus: "Model Fine-Tuning & Regularization",
+        question_text: "Q2: What techniques (LoRA, PEFT, Dropout, L2 Regularization) do you use to fine-tune open-source models while preventing overfitting?",
+        sample_answer: "I use Low-Rank Adaptation (LoRA) for parameter-efficient fine-tuning, monitor validation loss curves, and apply dropout layers to prevent overfitting."
+      },
+      {
+        id: 3,
+        question_number: "Question 3 of 3",
+        skill_focus: "ML Model Evaluation & Deployment",
+        question_text: "Q3: How do you evaluate classification model metrics (Precision, Recall, F1-Score, ROC-AUC) and serve models using ONNX Runtime?",
+        sample_answer: "I evaluate imbalanced classification models using F1-score and ROC-AUC curves, optimize inference latencies with ONNX Runtime, and deploy endpoints via FastAPI."
+      }
+    ],
+    "Frontend Engineering": [
+      {
+        id: 1,
+        question_number: "Question 1 of 3",
+        skill_focus: "React State & Component Performance",
+        question_text: "Q1: How do you optimize React component re-rendering performance using memoization (useMemo, useCallback) and Virtual DOM diffing?",
+        sample_answer: "I prevent unnecessary component re-renders using React.memo, memoize expensive calculations with useMemo, and stabilize callback references using useCallback."
+      },
+      {
+        id: 2,
+        question_number: "Question 2 of 3",
+        skill_focus: "Tailwind CSS & Responsive Layouts",
+        question_text: "Q2: Explain how you implement glassmorphism UI design systems, responsive flexbox/grid layouts, and accessibility standards in modern web apps.",
+        sample_answer: "I build responsive dark-mode layouts using Tailwind CSS grid utilities, apply backdrop-blur filters for glassmorphism, and enforce ARIA accessibility labels."
+      },
+      {
+        id: 3,
+        question_number: "Question 3 of 3",
+        skill_focus: "Web Speech API & Browser Telemetry",
+        question_text: "Q3: How do you integrate Web Speech Synthesis and Web Speech Recognition APIs for real-time browser audio transcription?",
+        sample_answer: "I initialize SpeechSynthesisUtterance for AI text-to-speech voiceover and listen to continuous webkitSpeechRecognition events for real-time microphone transcript streaming."
+      }
+    ],
+    "Full Stack Engineering": [
+      {
+        id: 1,
+        question_number: "Question 1 of 3",
+        skill_focus: "End-to-End Architecture",
+        question_text: "Q1: How do you architect an end-to-end Full Stack web application connecting a React.js frontend with a FastAPI backend database?",
+        sample_answer: "I build a React frontend communicating via Axios REST API requests to a FastAPI backend, which handles database ORM queries and JWT token verification."
+      },
+      {
+        id: 2,
+        question_number: "Question 2 of 3",
+        skill_focus: "CORS Policies & Security",
+        question_text: "Q2: Discuss CORS middleware configuration, HTTP-only cookie security, and SQL injection prevention in full-stack applications.",
+        sample_answer: "I configure strict CORS origin policies in FastAPI middleware, store sensitive tokens in HTTP-only cookies, and prevent SQL injection using SQLAlchemy ORM parameterized queries."
+      },
+      {
+        id: 3,
+        question_number: "Question 3 of 3",
+        skill_focus: "State Management & Deployment",
+        question_text: "Q3: How do you manage global frontend state and orchestrate production deployment using Docker containers and cloud hosting?",
+        sample_answer: "I manage client state using React hooks and context APIs, package services into Docker containers, and deploy frontend static builds to Vercel and backend APIs to Render/AWS."
+      }
+    ],
+    "HR & Behavioral": [
+      {
+        id: 1,
+        question_number: "Question 1 of 3",
+        skill_focus: "Production Incident Recovery",
+        question_text: "Q1: Describe a situation where a technical deployment failed in production. How did you diagnose and resolve it using the STAR framework?",
+        sample_answer: "I inspected server stack traces to identify a database pool leak, applied a hotfix patch to close unhandled connections, and restored system uptime within 15 minutes."
+      },
+      {
+        id: 2,
+        question_number: "Question 2 of 3",
+        skill_focus: "Team Conflict & Collaboration",
+        question_text: "Q2: How do you handle technical disagreements with senior team members regarding architectural choices or tight project deadlines?",
+        sample_answer: "I present data-driven benchmark evidence, listen to team perspectives, find consensus on technical trade-offs, and prioritize deliverable milestones."
+      },
+      {
+        id: 3,
+        question_number: "Question 3 of 3",
+        skill_focus: "Continuous Skill Improvement",
+        question_text: "Q3: How do you stay updated with emerging AI technologies, frameworks, and software engineering best practices?",
+        sample_answer: "I follow technical documentation releases, build hands-on open-source projects, and regularly practice mock interview problem-solving scenarios."
+      }
     ]
   };
 
@@ -63,7 +178,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     return () => clearInterval(timer);
   }, []);
 
-  // PROCTORING HANDLER: 1ST TIME = WARNING TOAST, 2ND TIME = AUTO-CANCEL & TERMINATE ENTIRE EXAM
+  // PROCTORING HANDLER: 1ST TIME = WARNING TOAST, 2ND TIME = AUTO-CANCEL ENTIRE EXAM
   const triggerProctoringViolation = (reasonText) => {
     setViolationCount(prev => {
       const nextCount = prev + 1;
@@ -88,7 +203,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     });
   };
 
-  // Tab switch listener
+  // Tab switch listener ONLY (No false triggers on room entry)
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -99,11 +214,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
-
-  // Handle webcam vision proctoring callback
-  const handleVisionMalpractice = (data) => {
-    triggerProctoringViolation("Face Removed from Camera / Phone Object Detected");
-  };
 
   const handleForceMalpracticeSubmit = async (reasonText) => {
     stopSpeaking();
@@ -410,7 +520,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
           {/* Candidate Webcam Box */}
           <WebcamMonitor 
             onMetricsUpdate={(m) => setTelemetry(prev => ({ ...prev, ...m }))}
-            onMalpracticeDetected={handleVisionMalpractice} 
           />
 
           {/* DYNAMIC LIVE TELEMETRY BARS */}
