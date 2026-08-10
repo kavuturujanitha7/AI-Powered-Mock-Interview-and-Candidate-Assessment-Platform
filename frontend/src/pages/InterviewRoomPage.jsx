@@ -12,7 +12,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [activePopup, setActivePopup] = useState(null);
-  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [violationCount, setViolationCount] = useState(0);
   const [candidateAnswersList, setCandidateAnswersList] = useState([]);
   
   // DYNAMIC LIVE TELEMETRY STATE
@@ -63,17 +63,36 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     return () => clearInterval(timer);
   }, []);
 
-  // INSTANT SINGLE WARNING AUTO-CUT TAB SWITCH PROCTORING
+  // PROCTORING HANDLER: 1ST TIME = WARNING TOAST, 2ND TIME = AUTO-CANCEL & TERMINATE ENTIRE EXAM
+  const triggerProctoringViolation = (reasonText) => {
+    setViolationCount(prev => {
+      const nextCount = prev + 1;
+
+      if (nextCount === 1) {
+        // 1st Time Violation -> Display Warning Toast
+        setActivePopup({
+          text: `🚨 MALPRACTICE WARNING (1/2): ${reasonText}! Correct position immediately.`,
+          color: "bg-red-600/95 border-red-400 text-white font-bold"
+        });
+        setTimeout(() => setActivePopup(null), 5000);
+      } else if (nextCount >= 2) {
+        // 2nd Time Violation -> AUTO-CANCEL ENTIRE EXAM & REDIRECT TO REPORT
+        setActivePopup({
+          text: "🚨 EXAM CANCELLED (2/2 VIOLATIONS): Session auto-terminated due to multiple malpractice violations.",
+          color: "bg-red-700 border-red-500 text-white font-extrabold"
+        });
+        handleForceMalpracticeSubmit(reasonText);
+      }
+
+      return nextCount;
+    });
+  };
+
+  // Tab switch listener
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // INSTANT WARNING & AUTOMATIC INTERVIEW TERMINATION/CUT ON SINGLE TAB SWITCH
-        setActivePopup({
-          text: "🚨 MALPRACTICE WARNING DETECTED: Tab switch occurred! Session automatically terminated.",
-          color: "bg-red-600/90 border-red-500 text-white"
-        });
-        
-        handleForceMalpracticeSubmit();
+        triggerProctoringViolation("Browser Tab Switch Detected");
       }
     };
 
@@ -81,7 +100,12 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
-  const handleForceMalpracticeSubmit = async () => {
+  // Handle webcam vision proctoring callback
+  const handleVisionMalpractice = (data) => {
+    triggerProctoringViolation("Face Removed from Camera / Phone Object Detected");
+  };
+
+  const handleForceMalpracticeSubmit = async (reasonText) => {
     stopSpeaking();
     stopMicRecording();
     setSubmitting(true);
@@ -90,13 +114,13 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     
     const malpracticeReport = {
       ...report,
-      overall_score: 42.0,
-      performance_rating: "Malpractice Penalty - Session Auto-Terminated",
+      overall_score: 38.0,
+      performance_rating: "EXAM CANCELLED - Malpractice Penalty Applied",
       malpractice_flag: true,
-      tab_switches: 1,
-      strengths: ["Initial webcam video and microphone engagement active"],
-      weaknesses: ["Browser tab switch detected during live session - Immediate session termination applied"],
-      improvement_tips: ["Remain inside the live interview tab throughout the simulation."]
+      tab_switches: violationCount + 1,
+      strengths: ["Initial setup completed"],
+      weaknesses: [`Session Auto-Cancelled: Multiple Proctoring Violations (${reasonText})`],
+      improvement_tips: ["Do not switch tabs, use phone devices, or turn away from the camera during live interviews."]
     };
 
     setFinalReport(malpracticeReport);
@@ -104,12 +128,12 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     setActivePage('interview-report');
   };
 
-  // TRIGGER REAL-TIME AI WARNING POP-UP TOASTS
+  // TRIGGER REAL-TIME AI TELEMETRY POP-UP TOASTS
   useEffect(() => {
     const warningPopups = [
-      { text: "⚠️ AI Vision Warning: Please maintain direct eye contact with the camera!", color: "bg-amber-500/20 border-amber-500/40 text-amber-300" },
+      { text: "⚠️ AI Vision Proctoring: Keep face centered & avoid looking away!", color: "bg-amber-500/20 border-amber-500/40 text-amber-300" },
       { text: "🎙️ Speech Telemetry: Clear audio stream & steady speaking pace (138 WPM).", color: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300" },
-      { text: "🛡️ Anti-Cheat Proctoring: Active. Tab switching causes instant session termination!", color: "bg-red-500/20 border-red-500/40 text-red-300" }
+      { text: "🛡️ Anti-Cheat Active: 2nd violation auto-cancels the entire exam!", color: "bg-red-500/20 border-red-500/40 text-red-300" }
     ];
 
     const popupInterval = setInterval(() => {
@@ -295,6 +319,12 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
         </div>
 
         <div className="flex items-center gap-3">
+          {violationCount > 0 && (
+            <span className="px-3 py-1 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 font-mono text-xs font-bold flex items-center gap-1">
+              🚨 Malpractice Violations: {violationCount}/2
+            </span>
+          )}
+
           <span className="px-3 py-1 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-mono text-xs font-bold flex items-center gap-1.5">
             ● ON AIR - {formatTimer(timerSeconds)}
           </span>
@@ -378,7 +408,10 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
         <div className="lg:col-span-4 space-y-4">
           
           {/* Candidate Webcam Box */}
-          <WebcamMonitor onMetricsUpdate={(m) => setTelemetry(prev => ({ ...prev, ...m }))} />
+          <WebcamMonitor 
+            onMetricsUpdate={(m) => setTelemetry(prev => ({ ...prev, ...m }))}
+            onMalpracticeDetected={handleVisionMalpractice} 
+          />
 
           {/* DYNAMIC LIVE TELEMETRY BARS */}
           <div className="glass-card p-5 rounded-3xl border border-slate-800 space-y-3.5">
