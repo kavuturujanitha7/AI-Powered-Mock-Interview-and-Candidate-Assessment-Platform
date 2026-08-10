@@ -63,26 +63,17 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     return () => clearInterval(timer);
   }, []);
 
-  // ANTI-MALPRACTICE & TAB-SWITCH PROCTORING MONITOR
+  // INSTANT SINGLE WARNING AUTO-CUT TAB SWITCH PROCTORING
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        setTabSwitchCount(prev => {
-          const newCount = prev + 1;
-          
-          if (newCount === 1) {
-            setActivePopup({
-              text: "🚨 MALPRACTICE WARNING (1/2): Tab switch detected! Return to interview room immediately.",
-              color: "bg-red-600/30 border-red-500 text-red-200"
-            });
-            setTimeout(() => setActivePopup(null), 5000);
-          } else if (newCount >= 2) {
-            // AUTO-TERMINATE INTERVIEW ON 2ND TAB SWITCH
-            handleForceMalpracticeSubmit();
-          }
-
-          return newCount;
+        // INSTANT WARNING & AUTOMATIC INTERVIEW TERMINATION/CUT ON SINGLE TAB SWITCH
+        setActivePopup({
+          text: "🚨 MALPRACTICE WARNING DETECTED: Tab switch occurred! Session automatically terminated.",
+          color: "bg-red-600/90 border-red-500 text-white"
         });
+        
+        handleForceMalpracticeSubmit();
       }
     };
 
@@ -99,13 +90,13 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     
     const malpracticeReport = {
       ...report,
-      overall_score: 45.0,
-      performance_rating: "Malpractice Penalty - Session Terminated",
+      overall_score: 42.0,
+      performance_rating: "Malpractice Penalty - Session Auto-Terminated",
       malpractice_flag: true,
-      tab_switches: tabSwitchCount + 1,
-      strengths: ["Initial webcam and microphone engagement recorded"],
-      weaknesses: ["Multiple browser tab switches detected during live proctoring"],
-      improvement_tips: ["Maintain focus on the interview tab without switching windows."]
+      tab_switches: 1,
+      strengths: ["Initial webcam video and microphone engagement active"],
+      weaknesses: ["Browser tab switch detected during live session - Immediate session termination applied"],
+      improvement_tips: ["Remain inside the live interview tab throughout the simulation."]
     };
 
     setFinalReport(malpracticeReport);
@@ -118,7 +109,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     const warningPopups = [
       { text: "⚠️ AI Vision Warning: Please maintain direct eye contact with the camera!", color: "bg-amber-500/20 border-amber-500/40 text-amber-300" },
       { text: "🎙️ Speech Telemetry: Clear audio stream & steady speaking pace (138 WPM).", color: "bg-cyan-500/20 border-cyan-500/40 text-cyan-300" },
-      { text: "🛡️ Anti-Cheat Proctoring: Camera & Tab focus active.", color: "bg-emerald-500/20 border-emerald-500/40 text-emerald-300" }
+      { text: "🛡️ Anti-Cheat Proctoring: Active. Tab switching causes instant session termination!", color: "bg-red-500/20 border-red-500/40 text-red-300" }
     ];
 
     const popupInterval = setInterval(() => {
@@ -234,7 +225,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // SUBMIT & AUTO-PROGRESS UNTIL 3 QUESTIONS FINISHED -> AUTO CLOSE TO REPORT
   const handleNextQuestion = async () => {
     stopSpeaking();
     stopMicRecording();
@@ -305,12 +295,6 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
         </div>
 
         <div className="flex items-center gap-3">
-          {tabSwitchCount > 0 && (
-            <span className="px-3 py-1 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 font-mono text-xs font-bold flex items-center gap-1">
-              🚨 Tab Switch Warning: {tabSwitchCount}/2
-            </span>
-          )}
-
           <span className="px-3 py-1 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-mono text-xs font-bold flex items-center gap-1.5">
             ● ON AIR - {formatTimer(timerSeconds)}
           </span>
