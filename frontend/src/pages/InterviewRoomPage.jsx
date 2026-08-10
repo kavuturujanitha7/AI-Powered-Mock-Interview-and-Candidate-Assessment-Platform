@@ -26,150 +26,127 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
 
   const recognitionRef = useRef(null);
 
-  // STRICT 100% DOMAIN-SPECIFIC NON-REPEATING QUESTION BANK FOR EVERY ROLE
+  // REAL COMPANY INTERVIEW QUESTION FLOW (Starts with Introduction -> Core Domain -> Practical Scenario)
   const domainQuestionsBank = {
-    "Backend Engineering": [
+    "AI / ML & Data Science": [
       {
         id: 1,
-        question_number: "Question 1 of 3",
-        skill_focus: "System Design & Microservices",
-        question_text: "Q1: Explain how you would design a scalable backend microservices architecture handling high-concurrency requests with Redis caching.",
-        sample_answer: "I design backend microservices using a FastAPI gateway, Redis for distributed query caching, and Celery workers with RabbitMQ queues for asynchronous background task processing."
+        question_number: "Question 1 of 3 (Candidate Introduction)",
+        skill_focus: "Self Introduction & Project Experience",
+        question_text: "Q1: Please introduce yourself, your academic background, and summarize your primary projects in AI, Machine Learning, and Data Science.",
+        sample_answer: "Hello! I am a passionate developer specializing in Artificial Intelligence and Data Science. I have built projects including RAG pipelines, predictive machine learning models, and data analytics dashboards."
       },
       {
         id: 2,
-        question_number: "Question 2 of 3",
-        skill_focus: "Database Indexing & Query Tuning",
-        question_text: "Q2: How do you optimize slow SQL query performance using B-tree indexing, query execution plans, and transaction isolation levels?",
-        sample_answer: "I analyze EXPLAIN ANALYZE execution plans, create composite B-tree indexes on foreign key columns, and adjust isolation levels to prevent dirty reads and lock contention."
+        question_number: "Question 2 of 3 (AI & LLMs)",
+        skill_focus: "Artificial Intelligence & RAG Embeddings",
+        question_text: "Q2 [AI]: Explain how Retrieval-Augmented Generation (RAG) combines Vector Databases (ChromaDB) with LLMs to eliminate model hallucinations.",
+        sample_answer: "RAG retrieves relevant document chunks from ChromaDB using semantic vector search and injects context into LLM prompts, providing grounded and hallucination-free answers."
       },
       {
         id: 3,
-        question_number: "Question 3 of 3",
-        skill_focus: "API Security & JWT Token Auth",
-        question_text: "Q3: Discuss your strategy for securing REST APIs using JWT access tokens, refresh tokens, rate limiting, and CORS security headers.",
-        sample_answer: "I issue short-lived JWT access tokens in authorization headers, store refresh tokens in HTTP-only cookies, apply rate limiting via Redis, and enforce strict CORS origins."
+        question_number: "Question 3 of 3 (Machine Learning)",
+        skill_focus: "Machine Learning Model Tuning & Overfitting",
+        question_text: "Q3 [Machine Learning & Data Science]: How do you handle missing dataset values, prevent model overfitting using cross-validation, and evaluate model performance?",
+        sample_answer: "I handle missing data using median imputation, prevent overfitting using 5-fold cross-validation with L2 regularization, and evaluate performance using F1-score and ROC-AUC metrics."
+      }
+    ],
+    "Backend Engineering": [
+      {
+        id: 1,
+        question_number: "Question 1 of 3 (Candidate Introduction)",
+        skill_focus: "Self Introduction & Backend Experience",
+        question_text: "Q1: Please introduce yourself and highlight your experience building RESTful APIs, database schemas, and backend applications.",
+        sample_answer: "Hi! I am a backend software engineer with hands-on experience building REST APIs using Python FastAPI and PostgreSQL databases with JWT authentication."
+      },
+      {
+        id: 2,
+        question_number: "Question 2 of 3 (Core Backend)",
+        skill_focus: "Database Query Optimization & Indexing",
+        question_text: "Q2: How do you identify slow SQL query bottlenecks and optimize execution speed using indexing and ORM connection pooling?",
+        sample_answer: "I analyze query execution plans using EXPLAIN ANALYZE, create B-tree indexes on high-frequency search columns, and configure SQLAlchemy connection pools."
+      },
+      {
+        id: 3,
+        question_number: "Question 3 of 3 (API Security)",
+        skill_focus: "JWT Token Authentication & Security",
+        question_text: "Q3: How do you secure REST API endpoints using JWT access tokens, password hashing with bcrypt, and CORS headers?",
+        sample_answer: "I issue short-lived JWT access tokens, store hashed passwords securely using bcrypt, and enforce strict CORS origin policies on backend endpoints."
       }
     ],
     "Cloud & DevOps": [
       {
         id: 1,
-        question_number: "Question 1 of 3",
-        skill_focus: "Docker & CI/CD Pipelines",
-        question_text: "Q1: Describe your workflow for writing multi-stage Dockerfiles and automating CI/CD build pipelines using GitHub Actions.",
-        sample_answer: "I write multi-stage Dockerfiles to minimize container image sizes and build automated GitHub Actions workflows for linting, testing, and container deployment."
+        question_number: "Question 1 of 3 (Candidate Introduction)",
+        skill_focus: "Self Introduction & Cloud Experience",
+        question_text: "Q1: Please introduce yourself and describe your background in cloud infrastructure, containerization, and automated deployments.",
+        sample_answer: "Hello! I am a DevOps engineer experienced in containerizing applications with Docker, writing Terraform infrastructure code, and configuring GitHub Actions CI/CD pipelines."
       },
       {
         id: 2,
-        question_number: "Question 2 of 3",
-        skill_focus: "Kubernetes & Infrastructure as Code",
-        question_text: "Q2: How do you manage infrastructure provisioning using Terraform and orchestrate zero-downtime rolling updates in Kubernetes?",
-        sample_answer: "I define cloud resources with Terraform code modules and execute zero-downtime rolling updates in Kubernetes using readiness and liveness health probes."
+        question_number: "Question 2 of 3 (Containerization)",
+        skill_focus: "Docker & Multi-Stage Builds",
+        question_text: "Q2: Describe how multi-stage Docker builds reduce container image sizes and optimize build speed for production cloud environments.",
+        sample_answer: "Multi-stage builds separate compilation dependencies from the final execution image, resulting in lightweight, secure container images for cloud deployment."
       },
       {
         id: 3,
-        question_number: "Question 3 of 3",
-        skill_focus: "Centralized Monitoring & Logging",
-        question_text: "Q3: How do you set up centralized logging and metrics monitoring using Prometheus, Grafana, and ELK Stack for cloud microservices?",
-        sample_answer: "I aggregate log streams via Fluentd into Elasticsearch, monitor service metrics using Prometheus scrapers, and build alert dashboards in Grafana."
-      }
-    ],
-    "Data Science & AI/ML": [
-      {
-        id: 1,
-        question_number: "Question 1 of 3",
-        skill_focus: "LLM RAG Pipelines & Vector DBs",
-        question_text: "Q1: Explain how Retrieval-Augmented Generation (RAG) works using vector databases (Pinecone/ChromaDB) and Transformer embedding models.",
-        sample_answer: "RAG converts unstructured documents into vector embeddings using transformer models, indexes vectors in ChromaDB, and injects retrieved context into LLM prompts."
-      },
-      {
-        id: 2,
-        question_number: "Question 2 of 3",
-        skill_focus: "Model Fine-Tuning & Regularization",
-        question_text: "Q2: What techniques (LoRA, PEFT, Dropout, L2 Regularization) do you use to fine-tune open-source models while preventing overfitting?",
-        sample_answer: "I use Low-Rank Adaptation (LoRA) for parameter-efficient fine-tuning, monitor validation loss curves, and apply dropout layers to prevent overfitting."
-      },
-      {
-        id: 3,
-        question_number: "Question 3 of 3",
-        skill_focus: "ML Model Evaluation & Deployment",
-        question_text: "Q3: How do you evaluate classification model metrics (Precision, Recall, F1-Score, ROC-AUC) and serve models using ONNX Runtime?",
-        sample_answer: "I evaluate imbalanced classification models using F1-score and ROC-AUC curves, optimize inference latencies with ONNX Runtime, and deploy endpoints via FastAPI."
+        question_number: "Question 3 of 3 (Kubernetes & Monitoring)",
+        skill_focus: "Kubernetes Orchestration & Prometheus",
+        question_text: "Q3: How do you orchestrate zero-downtime rolling updates in Kubernetes and set up monitoring alerts using Prometheus and Grafana?",
+        sample_answer: "I configure Kubernetes readiness probes for rolling updates and aggregate real-time server metrics into Prometheus scrapers linked to Grafana alert dashboards."
       }
     ],
     "Frontend Engineering": [
       {
         id: 1,
-        question_number: "Question 1 of 3",
-        skill_focus: "React State & Component Performance",
-        question_text: "Q1: How do you optimize React component re-rendering performance using memoization (useMemo, useCallback) and Virtual DOM diffing?",
-        sample_answer: "I prevent unnecessary component re-renders using React.memo, memoize expensive calculations with useMemo, and stabilize callback references using useCallback."
+        question_number: "Question 1 of 3 (Candidate Introduction)",
+        skill_focus: "Self Introduction & Frontend Experience",
+        question_text: "Q1: Please introduce yourself and discuss your experience crafting interactive web user interfaces using React.js and Tailwind CSS.",
+        sample_answer: "Hi! I am a frontend developer experienced in building modern, responsive single-page web applications using React.js, Tailwind CSS, and Web APIs."
       },
       {
         id: 2,
-        question_number: "Question 2 of 3",
-        skill_focus: "Tailwind CSS & Responsive Layouts",
-        question_text: "Q2: Explain how you implement glassmorphism UI design systems, responsive flexbox/grid layouts, and accessibility standards in modern web apps.",
-        sample_answer: "I build responsive dark-mode layouts using Tailwind CSS grid utilities, apply backdrop-blur filters for glassmorphism, and enforce ARIA accessibility labels."
+        question_number: "Question 2 of 3 (React Performance)",
+        skill_focus: "React State & Memoization Hooks",
+        question_text: "Q2: How do you optimize React web app performance using useMemo, useCallback, and React.memo to prevent unnecessary component re-renders?",
+        sample_answer: "I memoize heavy computation values with useMemo, preserve function references with useCallback, and wrap child components in React.memo."
       },
       {
         id: 3,
-        question_number: "Question 3 of 3",
-        skill_focus: "Web Speech API & Browser Telemetry",
-        question_text: "Q3: How do you integrate Web Speech Synthesis and Web Speech Recognition APIs for real-time browser audio transcription?",
-        sample_answer: "I initialize SpeechSynthesisUtterance for AI text-to-speech voiceover and listen to continuous webkitSpeechRecognition events for real-time microphone transcript streaming."
-      }
-    ],
-    "Full Stack Engineering": [
-      {
-        id: 1,
-        question_number: "Question 1 of 3",
-        skill_focus: "End-to-End Architecture",
-        question_text: "Q1: How do you architect an end-to-end Full Stack web application connecting a React.js frontend with a FastAPI backend database?",
-        sample_answer: "I build a React frontend communicating via Axios REST API requests to a FastAPI backend, which handles database ORM queries and JWT token verification."
-      },
-      {
-        id: 2,
-        question_number: "Question 2 of 3",
-        skill_focus: "CORS Policies & Security",
-        question_text: "Q2: Discuss CORS middleware configuration, HTTP-only cookie security, and SQL injection prevention in full-stack applications.",
-        sample_answer: "I configure strict CORS origin policies in FastAPI middleware, store sensitive tokens in HTTP-only cookies, and prevent SQL injection using SQLAlchemy ORM parameterized queries."
-      },
-      {
-        id: 3,
-        question_number: "Question 3 of 3",
-        skill_focus: "State Management & Deployment",
-        question_text: "Q3: How do you manage global frontend state and orchestrate production deployment using Docker containers and cloud hosting?",
-        sample_answer: "I manage client state using React hooks and context APIs, package services into Docker containers, and deploy frontend static builds to Vercel and backend APIs to Render/AWS."
+        question_number: "Question 3 of 3 (Web APIs)",
+        skill_focus: "Web Speech API & Audio Streams",
+        question_text: "Q3: Explain how you integrate Web Speech Synthesis for text-to-speech voiceover and SpeechRecognition for real-time microphone transcriptions.",
+        sample_answer: "I use SpeechSynthesisUtterance for browser text-to-speech playback and continuous webkitSpeechRecognition for real-time speech-to-text transcript streaming."
       }
     ],
     "HR & Behavioral": [
       {
         id: 1,
-        question_number: "Question 1 of 3",
-        skill_focus: "Production Incident Recovery",
-        question_text: "Q1: Describe a situation where a technical deployment failed in production. How did you diagnose and resolve it using the STAR framework?",
-        sample_answer: "I inspected server stack traces to identify a database pool leak, applied a hotfix patch to close unhandled connections, and restored system uptime within 15 minutes."
+        question_number: "Question 1 of 3 (Candidate Introduction)",
+        skill_focus: "Self Introduction & Career Goals",
+        question_text: "Q1: Tell me about yourself, your career journey, and why you are interested in joining our engineering team.",
+        sample_answer: "Hello! I am an ambitious software engineer who enjoys solving complex problems, collaborating with cross-functional teams, and continuously improving my technical skills."
       },
       {
         id: 2,
-        question_number: "Question 2 of 3",
-        skill_focus: "Team Conflict & Collaboration",
-        question_text: "Q2: How do you handle technical disagreements with senior team members regarding architectural choices or tight project deadlines?",
-        sample_answer: "I present data-driven benchmark evidence, listen to team perspectives, find consensus on technical trade-offs, and prioritize deliverable milestones."
+        question_number: "Question 2 of 3 (Problem Solving)",
+        skill_focus: "STAR Method & Conflict Resolution",
+        question_text: "Q2: Describe a technical conflict or tight project deadline you encountered. How did you resolve it using the STAR framework?",
+        sample_answer: "In a past project, when faced with a tight deadline, I prioritized core MVP features, collaborated closely with team members, and delivered the working software on schedule."
       },
       {
         id: 3,
-        question_number: "Question 3 of 3",
-        skill_focus: "Continuous Skill Improvement",
-        question_text: "Q3: How do you stay updated with emerging AI technologies, frameworks, and software engineering best practices?",
-        sample_answer: "I follow technical documentation releases, build hands-on open-source projects, and regularly practice mock interview problem-solving scenarios."
+        question_number: "Question 3 of 3 (Growth)",
+        skill_focus: "Continuous Learning & Professional Discipline",
+        question_text: "Q3: How do you handle feedback from code reviews and stay updated with new software technologies?",
+        sample_answer: "I view code reviews as learning opportunities, actively integrate feedback into my code, and read official technical documentation to stay updated."
       }
     ]
   };
 
-  const activeDomain = sessionData?.domain || sessionData?.category || "Backend Engineering";
-  const questions = (domainQuestionsBank[activeDomain] || domainQuestionsBank["Backend Engineering"]).slice(0, 3);
+  const activeDomain = sessionData?.domain || sessionData?.category || "AI / ML & Data Science";
+  const questions = (domainQuestionsBank[activeDomain] || domainQuestionsBank["AI / ML & Data Science"]).slice(0, 3);
   const currentQ = questions[currentIdx] || questions[0];
 
   // Timer effect
@@ -203,7 +180,7 @@ export default function InterviewRoomPage({ sessionData, setActivePage, setFinal
     });
   };
 
-  // Tab switch listener ONLY (No false triggers on room entry)
+  // Tab switch listener ONLY
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
