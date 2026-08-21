@@ -57,7 +57,11 @@ class InterviewSession(Base):
     weaknesses = Column(JSON)
     improvement_tips = Column(JSON)
 
-    status = Column(String, default="in_progress") # in_progress, completed
+    status = Column(String, default="active") # active, completed, ended_by_candidate
+    ended_reason = Column(String, default="completed") # completed, ended_by_candidate
+    started_at = Column(DateTime, default=datetime.utcnow)
+    finished_at = Column(DateTime, nullable=True)
+    questions_data = Column(JSON, nullable=True) # Stored questions list for page refresh recovery
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="sessions")
@@ -68,6 +72,7 @@ class QuestionAnswer(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(Integer, ForeignKey("interview_sessions.id"))
+    question_index = Column(Integer, default=1)
     question_text = Column(Text)
     category = Column(String)
     candidate_answer = Column(Text)

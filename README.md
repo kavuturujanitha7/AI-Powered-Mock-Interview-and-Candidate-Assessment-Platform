@@ -1,128 +1,119 @@
-# SmartHire AI: AI-Powered Mock Interview & Candidate Assessment Platform
+# SmartHire-AI: AI-Powered Mock Interview & Candidate Assessment Platform
 
-SmartHire AI is an end-to-end, state-of-the-art AI mock interview platform featuring a **Conversational LLM AI Hiring Manager Agent ("Sarah")**, webcam vision tracking, speech-to-text telemetry, resume PDF skill parsing, multi-criteria rubric evaluations, and exportable PDF report cards.
+SmartHire-AI is a full-stack, AI-powered mock interview platform featuring **Mira**, an autonomous AI Technical Interviewer driven by **Groq Large Language Models (LLM)** model `openai/gpt-oss-120b`. The platform provides dynamic question generation, adaptive follow-ups, resume skill extraction, live speech-to-text transcript processing, camera stream tracking, truthful system diagnostics, multi-dimensional scoring rubrics, and downloadable PDF performance report cards.
 
 ---
 
-## 🤖 Large Language Model (LLM) Integration Architecture
+## 🤖 Groq LLM Integration Architecture
 
-The platform leverages **Large Language Model (LLM)** capabilities across 4 core stages:
+The platform uses **Groq LLM (`openai/gpt-oss-120b`)** for dynamic, non-hardcoded interview question generation and answer evaluation:
 
 ```
-                  ┌──────────────────────────────────────────────────────────┐
-                  │ 1. LLM Resume Skill Extraction                           │
-                  │    - Scans PDF text, identifies technical competencies,   │
-                  │      and constructs executive candidate profiles.        │
-                  └────────────────────────────┬─────────────────────────────┘
-                                               │
-                                               ▼
-                  ┌──────────────────────────────────────────────────────────┐
-                  │ 2. LLM Adaptive Question & Answer Generator             │
-                  │    - Dynamically generates domain & difficulty questions  │
-                  │      along with high-score sample answers.               │
-                  └────────────────────────────┬─────────────────────────────┘
-                                               │
-                                               ▼
-                  ┌──────────────────────────────────────────────────────────┐
-                  │ 3. Conversational LLM AI Agent ("Sarah")                 │
-                  │    - Conducts natural human-like voice interview dialogues│
-                  │      with real-time conversational follow-ups.            │
-                  └────────────────────────────┬─────────────────────────────┘
-                                               │
-                                               ▼
-                  ┌──────────────────────────────────────────────────────────┐
-                  │ 4. LLM Answer Evaluation & Feedback Engine               │
-                  │    - Evaluates spoken transcripts against rubric factors  │
-                  │      and generates strengths, weaknesses & tips.          │
-                  └──────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│ 1. Resume Parsing & Skill Extraction                    │
+│    - Extracts text from candidate resumes               │
+│    - Identifies technical skills, experience & keywords  │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│ 2. Dynamic Groq LLM Question Generator                  │
+│    - Model: openai/gpt-oss-120b                        │
+│    - Generates target domain & difficulty questions     │
+│    - Repetition Filter: Rejects questions >50% similar  │
+│      to previously asked session questions             │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│ 3. Autonomous AI Interviewer ("Mira")                  │
+│    - Conducts Q&A interview dialogue                   │
+│    - Speaks prompts via Web Speech Synthesis           │
+│    - Captures candidate responses via Speech-to-Text    │
+│    - Adaptive Follow-Ups: Asks relevant follow-ups     │
+│      based on candidate's previous answer              │
+└───────────────────────────┬────────────────────────────┘
+                            │
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│ 4. Groq LLM Answer Evaluation Engine                    │
+│    - Evaluates technical accuracy, depth & clarity     │
+│    - Logs unanswered questions as "Unanswered" (0 score)│
+│    - Generates per-question breakdown & summary report │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📌 Sitemap & Code File Index for Mentor Evaluation
+## 🔑 Key Features
 
-Mentors can inspect and verify every module and source file directly using this index:
-
-### 📁 Backend Core & AI Services
-- **FastAPI Application Server**: [`backend/main.py`](backend/main.py)
-- **Database Schemas & ORM**: [`backend/models.py`](backend/models.py)
-- **JWT Auth & Passlib Security**: [`backend/auth.py`](backend/auth.py)
-- **LLM Resume Skill Extractor**: [`backend/services/resume_service.py`](backend/services/resume_service.py)
-- **LLM Question & Answer Engine**: [`backend/services/question_service.py`](backend/services/question_service.py)
-- **Speech-to-Text & WPM Telemetry**: [`backend/services/speech_service.py`](backend/services/speech_service.py)
-- **MediaPipe Vision Eye Tracking**: [`backend/services/vision_service.py`](backend/services/vision_service.py)
-- **LLM Evaluation Scoring Rubric**: [`backend/services/scoring_service.py`](backend/services/scoring_service.py)
-
-### 📁 Frontend UI & Real-Time Components
-- **Conversational AI Agent Component**: [`frontend/src/components/AIInterviewerAgent.jsx`](frontend/src/components/AIInterviewerAgent.jsx)
-- **MediaPipe Webcam Vision Monitor**: [`frontend/src/components/WebcamMonitor.jsx`](frontend/src/components/WebcamMonitor.jsx)
-- **Microphone Audio Visualizer**: [`frontend/src/components/AudioWaveform.jsx`](frontend/src/components/AudioWaveform.jsx)
-- **Interactive Interview Simulation Room**: [`frontend/src/pages/InterviewRoomPage.jsx`](frontend/src/pages/InterviewRoomPage.jsx)
-- **Candidate Analytics Hub**: [`frontend/src/pages/CandidateDashboard.jsx`](frontend/src/pages/CandidateDashboard.jsx)
-- **Resume AI Upload View**: [`frontend/src/pages/ResumeUploadPage.jsx`](frontend/src/pages/ResumeUploadPage.jsx)
-- **Downloadable PDF Assessment Report**: [`frontend/src/pages/InterviewReportPage.jsx`](frontend/src/pages/InterviewReportPage.jsx)
+1. **Mira AI Interviewer**: Professional AI hiring manager conducting dynamic, conversational technical interviews.
+2. **Groq LLM Engine**: Uses Groq model `openai/gpt-oss-120b` for dynamic structured JSON question generation and candidate answer scoring.
+3. **Dynamic Question Generation (No Hardcoded Bank)**: Every interview generates unique questions based on domain, difficulty, candidate skills, and previous questions (with similarity filtering).
+4. **Adaptive Follow-Up Questions**: After a candidate answer, Mira generates a relevant follow-up question adaptively.
+5. **Explicit Unanswered Question Handling**: Unanswered or skipped questions are explicitly stored as `Unanswered` with 0 score without hallucinating fake answers.
+6. **Truthful System Readiness Check**: Hardware and API readiness tests check camera, microphone, SpeechRecognition, FastAPI backend, and Groq LLM connectivity.
+7. **Comprehensive PDF Assessment**: Generates official evaluation reports with per-question breakdowns (Question, Answer, Status, Technical/Clarity scores, Feedback, Strengths, Weaknesses).
 
 ---
 
-## 🌟 Feature & Module Verification Matrix
+## 📁 Repository Sitemap & File Structure
 
-| Module ID | Module Name | Implementation Summary & Tech Used | Verification File Reference | Status |
-|---|---|---|---|---|
-| **MOD-01** | Security & Auth | JWT Token Auth, bcrypt password hashing, role access control | [`backend/auth.py`](backend/auth.py) | ✅ Verified |
-| **MOD-02** | Resume PDF Skill Extractor | Scans PDF binary text & extracts technical competencies | [`backend/services/resume_service.py`](backend/services/resume_service.py) | ✅ Verified |
-| **MOD-03** | Adaptive Question Generator | Generates domain-matched questions across 3 difficulty levels | [`backend/services/question_service.py`](backend/services/question_service.py) | ✅ Verified |
-| **MOD-04** | Conversational AI Agent | Animated AI hiring agent ("Sarah"), Web Speech voiceover & camera | [`frontend/src/components/AIInterviewerAgent.jsx`](frontend/src/components/AIInterviewerAgent.jsx) | ✅ Verified |
-| **MOD-05** | Speech Telemetry & STT | Web Speech STT, WPM calculation & filler-word detection | [`backend/services/speech_service.py`](backend/services/speech_service.py) | ✅ Verified |
-| **MOD-06** | MediaPipe Vision Monitor | Webcam eye-contact consistency %, head posture & facial engagement | [`frontend/src/components/WebcamMonitor.jsx`](frontend/src/components/WebcamMonitor.jsx) | ✅ Verified |
-| **MOD-07** | LLM Multi-Criteria Scoring | Evaluates performance: Comm (30%), Conf (25%), Tech (30%), Prof (15%) | [`backend/services/scoring_service.py`](backend/services/scoring_service.py) | ✅ Verified |
-| **MOD-08** | PDF Report & Analytics Hub | Candidate skill radar breakdown & downloadable PDF assessment report | [`frontend/src/pages/InterviewReportPage.jsx`](frontend/src/pages/InterviewReportPage.jsx) | ✅ Verified |
+### Backend (Python / FastAPI)
+- **API Server & Routing**: [`backend/main.py`](backend/main.py)
+- **Groq LLM Service**: [`backend/services/llm_service.py`](backend/services/llm_service.py)
+- **Question Generator**: [`backend/services/question_service.py`](backend/services/question_service.py)
+- **Resume Parser**: [`backend/services/resume_service.py`](backend/services/resume_service.py)
+- **Speech Service**: [`backend/services/speech_service.py`](backend/services/speech_service.py)
+- **Vision Stream Processor**: [`backend/services/vision_service.py`](backend/services/vision_service.py)
+- **Assessment Scoring**: [`backend/services/scoring_service.py`](backend/services/scoring_service.py)
+- **Database ORM**: [`backend/models.py`](backend/models.py) & [`backend/database.py`](backend/database.py)
+- **Authentication**: [`backend/auth.py`](backend/auth.py)
+
+### Frontend (React / Vite)
+- **AI Agent Interface**: [`frontend/src/services/aiAgent.js`](frontend/src/services/aiAgent.js)
+- **AI Interviewer Component**: [`frontend/src/components/AIInterviewerAgent.jsx`](frontend/src/components/AIInterviewerAgent.jsx)
+- **Webcam Feed Component**: [`frontend/src/components/WebcamMonitor.jsx`](frontend/src/components/WebcamMonitor.jsx)
+- **Audio Waveform**: [`frontend/src/components/AudioWaveform.jsx`](frontend/src/components/AudioWaveform.jsx)
+- **Interview Setup View**: [`frontend/src/pages/InterviewSetupPage.jsx`](frontend/src/pages/InterviewSetupPage.jsx)
+- **Live Interview Room**: [`frontend/src/pages/InterviewRoomPage.jsx`](frontend/src/pages/InterviewRoomPage.jsx)
+- **Assessment Report View**: [`frontend/src/pages/InterviewReportPage.jsx`](frontend/src/pages/InterviewReportPage.jsx)
 
 ---
 
-## 📐 Scoring Formula & Performance Rubric
+## ⚙️ Environment Variables
 
-```math
-\text{Overall Score} = (0.30 \times \text{Communication}) + (0.25 \times \text{Confidence}) + (0.30 \times \text{Technical Relevance}) + (0.15 \times \text{Professionalism})
+Create a `backend/.env` file based on `.env.example`:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=openai/gpt-oss-120b
+DATABASE_URL=sqlite:///./smarthire.db
+SECRET_KEY=smarthire_super_secret_jwt_key_2026
 ```
 
-- **90–100**: Excellent
-- **75–89**: Good
-- **60–74**: Average
-- **40–59**: Needs Improvement
-- **Below 40**: Poor
-
 ---
 
-## 🚀 How to Run Locally
+## 🚀 Local Development Setup
 
-### Option 1: 1-Click Auto-Launcher (Recommended)
-Double-click **`start_app.bat`** in the project folder. It launches the backend server, frontend web app, and opens `http://localhost:3000` automatically.
-
-### Option 2: Manual Execution
-
-#### 1. Start Backend (FastAPI)
+### 1. Backend Setup
 ```bash
 cd backend
 pip install -r requirements.txt
 python -m uvicorn main:app --reload --port 8000
 ```
-API Documentation available at: `http://localhost:8000/docs`
+FastAPI Swagger documentation will be live at `http://localhost:8000/docs`.
 
-#### 2. Start Frontend (React)
+### 2. Frontend Setup
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Application running at: `http://localhost:3000`
+Application will be live at `http://localhost:3000`.
 
 ---
 
-## 📦 GitHub Repository Sync Instructions
-
-To push all changes to your remote GitHub repository:
-```bash
-git add .
-git commit -m "Update: Added conversational AI interviewer agent, LLM architecture docs, and master README sitemap"
-git push origin main
-```
+## ⚠️ Computer Vision & Hardware Limitations
+- Face presence status is tracked strictly when the webcam stream is active.
+- Telemetry indicators display truthful camera status (`Active`, `Initializing`, or `Camera Stream Monitored`) without fabricating fake random percentage metrics.

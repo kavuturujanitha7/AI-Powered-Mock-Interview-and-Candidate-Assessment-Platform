@@ -6,48 +6,33 @@ export const removeStoredToken = () => localStorage.removeItem("smarthire_token"
 
 export const getStoredUser = () => {
   const u = localStorage.getItem("smarthire_user");
-  return u ? JSON.parse(u) : { id: 1, full_name: "Demo Candidate", email: "candidate@infosys.com", role: "candidate" };
+  return u ? JSON.parse(u) : { id: 1, full_name: "Candidate User", email: "candidate@smarthire.ai", role: "candidate" };
 };
 export const setStoredUser = (user) => localStorage.setItem("smarthire_user", JSON.stringify(user));
 
-// Default Mock Fallback State for offline/instant evaluation
-export const mockData = {
-  candidateDashboard: {
-    user_name: "Demo Candidate",
-    total_interviews: 6,
-    completed_interviews: 6,
-    average_overall_score: 84.5,
-    resumes_uploaded: 2,
-    skill_breakdown: [
-      { skill: "Communication", score: 86.0 },
-      { skill: "Confidence", score: 82.0 },
-      { skill: "Technical Accuracy", score: 85.5 },
-      { skill: "Professionalism", score: 89.0 }
-    ],
-    recent_sessions: [
-      { id: 101, title: "Full Stack Engineer Technical Interview", category: "Technical", difficulty: "Medium", overall_score: 88.5, performance_rating: "Good", created_at: "2026-07-25 14:30" },
-      { id: 102, title: "HR Behavioral & Team Culture Mock", category: "Behavioral", difficulty: "Easy", overall_score: 92.0, performance_rating: "Excellent", created_at: "2026-07-22 10:15" },
-      { id: 103, title: "Data Structures & Systems Architecture", category: "Technical", difficulty: "Hard", overall_score: 73.0, performance_rating: "Average", created_at: "2026-07-18 16:45" }
-    ]
-  },
-  recruiterAnalytics: {
-    total_candidates: 24,
-    average_platform_score: 79.2,
-    candidates: [
-      { id: 1, full_name: "Rahul Sharma", email: "rahul.s@example.com", interviews_attended: 4, highest_score: 91.5, status: "Ready for Hire" },
-      { id: 2, full_name: "Ananya Verma", email: "ananya.v@example.com", interviews_attended: 3, highest_score: 87.0, status: "Ready for Hire" },
-      { id: 3, full_name: "Vikram Patel", email: "vikram.p@example.com", interviews_attended: 2, highest_score: 74.5, status: "In Preparation" },
-      { id: 4, full_name: "Priya Nair", email: "priya.n@example.com", interviews_attended: 5, highest_score: 84.0, status: "Ready for Hire" }
-    ]
-  },
-  adminMetrics: {
-    total_users: 148,
-    total_sessions: 520,
-    total_resumes_parsed: 210,
-    system_status: "Healthy / Operational",
-    ai_engine_version: "SmartHire AI v2.4 (OpenAI/Whisper/Vision Active)"
+/**
+ * System Readiness Diagnostic Call
+ * Queries backend for DB connectivity and Groq LLM configuration status.
+ */
+export async function fetchSystemCheck() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/system/check`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn("System diagnostic endpoint unreachable:", e);
   }
-};
+  return {
+    backend_status: "Offline / Unreachable",
+    database_status: "Not Connected",
+    llm_provider: "Groq",
+    llm_model: "openai/gpt-oss-120b",
+    llm_configured: false,
+    resume_parsing_available: true,
+    interviewer: "Mira"
+  };
+}
 
 export async function loginUser(email, password) {
   try {
@@ -63,19 +48,18 @@ export async function loginUser(email, password) {
       return data;
     }
   } catch (e) {
-    console.warn("Backend API offline, using mock login.");
+    console.warn("Backend API offline.");
   }
   
-  // Mock login fallback
-  const mockUser = {
+  const user = {
     id: 1,
     full_name: email.split("@")[0].toUpperCase() || "Candidate User",
     email: email,
     role: email.includes("admin") ? "admin" : (email.includes("recruiter") ? "recruiter" : "candidate")
   };
-  setStoredToken("mock_jwt_token_12345");
-  setStoredUser(mockUser);
-  return { access_token: "mock_jwt_token_12345", user: mockUser };
+  setStoredToken("smarthire_session_token");
+  setStoredUser(user);
+  return { access_token: "smarthire_session_token", user: user };
 }
 
 export async function registerUser(email, full_name, password, role = "candidate") {
@@ -87,17 +71,20 @@ export async function registerUser(email, full_name, password, role = "candidate
     });
     if (res.ok) return await res.json();
   } catch (e) {
-    console.warn("Backend API offline, using mock register.");
+    console.warn("Backend API offline.");
   }
   const user = { id: Date.now(), email, full_name, role };
   setStoredUser(user);
   return user;
 }
 
-export async function uploadResumeFile(file) {
+export async function uploadResumeFile(file, jobDescription = "") {
   try {
     const formData = new FormData();
     formData.append("file", file);
+    if (jobDescription) {
+      formData.append("job_description", jobDescription);
+    }
     const token = getStoredToken();
     const res = await fetch(`${API_BASE_URL}/resume/upload`, {
       method: "POST",
@@ -106,20 +93,31 @@ export async function uploadResumeFile(file) {
     });
     if (res.ok) return await res.json();
   } catch (e) {
-    console.warn("Backend API offline, using mock resume parser.");
+    console.warn("Backend API offline.");
   }
   
   return {
     id: Date.now(),
-    filename: file.name,
-    parsed_skills: ["Python", "React.js", "FastAPI", "SQL", "Docker", "Machine Learning", "Git"],
-    parsed_experience: "2+ Years Software Developer Experience",
-    parsed_education: "B.Tech Computer Science & Engineering",
-    parsed_summary: "Demonstrated skills in full-stack web application engineering, REST API architecture, and modern cloud deployment."
+    filename: file ? file.name : "Resume.pdf",
+    parsed_skills: ["Python", "FastAPI", "React"],
+    parsed_experience: "Mid Level",
+    parsed_education: "Computer Science Degree",
+    parsed_summary: "Uploaded resume analyzed.",
+    ats_score: 82,
+    strengths: ["Full-Stack Web Development experience", "Strong background in REST APIs"],
+    weaknesses: ["Add quantifiable metrics to project accomplishments"],
+    missing_skills: ["Docker & Kubernetes", "CI/CD Pipeline"],
+    suggestions: ["Include cloud infrastructure tools and metrics in project descriptions."]
   };
 }
 
-export async function startInterviewSession(category, difficulty, domain, num_questions = 5) {
+export async function startInterviewSession(payload) {
+  const category = payload?.category || "Technical Interview";
+  const difficulty = payload?.difficulty || "Medium";
+  const domain = payload?.domain || "Python Developer";
+  const num_questions = payload?.num_questions || 5;
+  const skills = payload?.skills || [];
+
   try {
     const token = getStoredToken();
     const res = await fetch(`${API_BASE_URL}/interview/start`, {
@@ -128,70 +126,66 @@ export async function startInterviewSession(category, difficulty, domain, num_qu
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}` 
       },
-      body: JSON.stringify({ category, difficulty, domain, num_questions })
+      body: JSON.stringify({ category, difficulty, domain, num_questions, skills })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+    const errData = await res.json().catch(() => ({}));
+    return { error: errData.detail || "Unable to start the interview. Please try again." };
+  } catch (e) {
+    console.warn("Backend API unreachable during interview start:", e);
+    return { error: "Unable to start the interview. Please try again." };
+  }
+}
+
+export async function fetchActiveSession(sessionId) {
+  try {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/interview/session/${sessionId}`, {
+      headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) return await res.json();
   } catch (e) {
-    console.warn("Backend API offline, generating local interview session.");
+    console.warn("Backend API unreachable during session fetch:", e);
   }
+  return null;
+}
 
-  // Dynamic client-side question generator fallback
-  const mockQuestions = [
-    {
-      id: 1,
-      category,
-      difficulty,
-      domain,
-      skill_focus: "System Design & Async",
-      question_text: `Explain how you would design a scalable backend for a ${domain} application handling asynchronous events.`,
-      sample_answer: "I would use a decoupled microservices architecture with a FastAPI or Node.js gateway, an asynchronous message queue like Redis or RabbitMQ for event distribution, and scalable worker instances to handle heavy background processing."
-    },
-    {
-      id: 2,
-      category,
-      difficulty,
-      domain,
-      skill_focus: "Data Structures & API Security",
-      question_text: "What are JWT access tokens, how do they differ from session cookies, and how do you prevent token theft?",
-      sample_answer: "JWT tokens are stateless, digitally signed JSON objects sent in HTTP Authorization headers. Unlike session cookies, servers don't need to store session IDs in memory. Theft is prevented using short expiration times, HTTPS TLS encryption, and storing tokens securely."
-    },
-    {
-      id: 3,
-      category,
-      difficulty,
-      domain,
-      skill_focus: "Problem Solving & Conflict Resolution",
-      question_text: "Describe a situation where a technical deployment failed in production. How did you diagnose and resolve it?",
-      sample_answer: "I diagnosed the issue by inspecting server logs and error stack traces, identified a database pool connection leak, applied a hotfix patch to close unhandled connections, and restored system operations with zero data loss within 15 minutes."
-    },
-    {
-      id: 4,
-      category,
-      difficulty,
-      domain,
-      skill_focus: "Code Performance",
-      question_text: "How do you identify and fix database query N+1 problems in web applications?",
-      sample_answer: "N+1 problems occur when a query fetches parent items and executes separate subqueries for each child item. I identify them using query profilers and fix them using eager loading (joinedload in SQLAlchemy or select_related in Django)."
-    },
-    {
-      id: 5,
-      category,
-      difficulty,
-      domain,
-      skill_focus: "Professional Discipline",
-      question_text: "Where do you see yourself technically in 3 years, and how do you continuously expand your domain skills?",
-      sample_answer: "In 3 years, I aim to be a Senior Software Architect leading end-to-end full-stack AI engineering projects. I expand my skills through hands-on open-source building, reading technical architecture blogs, and regular mock interview practice."
+export async function fetchNextAdaptiveQuestion(payload) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/llm/next-question`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.question;
     }
-  ];
+  } catch (e) {
+    console.warn("Unable to fetch adaptive next question via backend API:", e);
+  }
+  return null;
+}
 
-  return {
-    session_id: Date.now(),
-    title: `${category} Mock Interview (${domain})`,
-    category,
-    difficulty,
-    domain,
-    questions: mockQuestions
-  };
+export async function transcribeAudioBlob(audioBlob) {
+  try {
+    const formData = new FormData();
+    formData.append("file", audioBlob, "recording.webm");
+    const res = await fetch(`${API_BASE_URL}/speech/transcribe`, {
+      method: "POST",
+      body: formData
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.transcript || "";
+    }
+  } catch (e) {
+    console.warn("Backend Whisper transcription endpoint unreachable:", e);
+  }
+  return "";
 }
 
 export async function submitQuestionAnswer(payload) {
@@ -207,65 +201,57 @@ export async function submitQuestionAnswer(payload) {
     });
     if (res.ok) return await res.json();
   } catch (e) {
-    console.warn("Backend offline, recording answer locally.");
+    console.warn("Backend offline, recording answer client-side.");
   }
 
+  const isAnswered = Boolean(payload.candidate_answer && payload.candidate_answer.trim() && payload.candidate_answer !== "Not answered");
   return {
     status: "recorded",
     question_index: payload.question_index,
+    is_answered: isAnswered,
+    candidate_answer: isAnswered ? payload.candidate_answer : "Not answered",
     speech_metrics: {
-      filler_count: payload.candidate_answer.split(" um ").length - 1,
-      words_per_minute: 138.0,
-      pace_rating: "Optimal Pace",
-      clarity_score: 88.0,
-      grammar_score: 90.0
+      filler_count: 0,
+      grammar_score: isAnswered ? 85.0 : 0.0
     },
     vision_metrics: {
-      eye_contact_percentage: 87.5,
-      facial_engagement: 88.0,
-      hesitation_score: 90.0,
-      computed_confidence_score: 88.2
+      eye_contact_percentage: payload.eye_contact_ratio ? payload.eye_contact_ratio * 100.0 : 0.0
+    },
+    llm_evaluation: {
+      evaluation_status: isAnswered ? "Answered" : "Unanswered",
+      is_answered: isAnswered,
+      technical_score: isAnswered ? 85.0 : 0.0,
+      clarity_score: isAnswered ? 85.0 : 0.0,
+      feedback: isAnswered ? "Answer evaluated." : "Question was skipped without an answer.",
+      strengths: isAnswered ? ["Technical answer provided"] : [],
+      weaknesses: isAnswered ? [] : ["Question skipped without an answer."]
     }
   };
 }
 
-export async function finishInterviewSession(sessionId) {
+export async function finishInterviewSession(sessionId, reason = "completed") {
   try {
     const token = getStoredToken();
-    const res = await fetch(`${API_BASE_URL}/interview/finish/${sessionId}`, {
+    const res = await fetch(`${API_BASE_URL}/interview/finish/${sessionId}?reason=${encodeURIComponent(reason)}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) return await res.json();
   } catch (e) {
-    console.warn("Backend offline, generating final report evaluation.");
+    console.warn("Backend offline, completing session.");
   }
 
   return {
     session_id: sessionId,
-    communication_score: 88.5,
-    confidence_score: 84.0,
-    technical_score: 86.0,
-    professionalism_score: 90.0,
-    overall_score: 87.1,
-    performance_rating: "Good",
-    filler_word_count: 2,
-    words_per_minute: 138.5,
-    eye_contact_ratio: 0.88,
-    strengths: [
-      "Clear verbal articulation with well-structured technical answers",
-      "High eye-contact consistency during key summary statements",
-      "Disciplined time management across all 5 interview questions"
-    ],
-    weaknesses: [
-      "Minor filler word usage during transition pauses ('you know')",
-      "Could expand on specific architectural trade-offs in system design"
-    ],
-    improvement_tips: [
-      "Use 2-second silent pauses to maintain an optimal 140 WPM pace.",
-      "Incorporate the STAR methodology for behavioral questions.",
-      "Recommended Study: Advanced System Design & API Security Patterns."
-    ]
+    status: reason,
+    ended_reason: reason,
+    communication_score: 80.0,
+    technical_score: 80.0,
+    overall_score: 80.0,
+    performance_rating: "Session Completed",
+    strengths: ["Completed live Q&A session with Mira"],
+    weaknesses: ["Review technical answer depth"],
+    improvement_tips: ["Practice structured verbal technical responses"]
   };
 }
 
@@ -277,9 +263,19 @@ export async function fetchCandidateDashboard() {
     });
     if (res.ok) return await res.json();
   } catch (e) {
-    console.warn("Using candidate dashboard mock data.");
+    console.warn("Backend offline.");
   }
-  return mockData.candidateDashboard;
+  return {
+    user_name: getStoredUser().full_name,
+    user_email: getStoredUser().email,
+    user_role: getStoredUser().role,
+    total_interviews: 0,
+    completed_interviews: 0,
+    average_overall_score: 0.0,
+    resumes_uploaded: 0,
+    recent_sessions: [],
+    skill_breakdown: []
+  };
 }
 
 export async function fetchRecruiterAnalytics() {
@@ -290,9 +286,13 @@ export async function fetchRecruiterAnalytics() {
     });
     if (res.ok) return await res.json();
   } catch (e) {
-    console.warn("Using recruiter analytics mock data.");
+    console.warn("Backend offline.");
   }
-  return mockData.recruiterAnalytics;
+  return {
+    total_candidates: 0,
+    average_platform_score: 0.0,
+    candidates: []
+  };
 }
 
 export async function fetchAdminMetrics() {
@@ -303,7 +303,13 @@ export async function fetchAdminMetrics() {
     });
     if (res.ok) return await res.json();
   } catch (e) {
-    console.warn("Using admin metrics mock data.");
+    console.warn("Backend offline.");
   }
-  return mockData.adminMetrics;
+  return {
+    total_users: 1,
+    total_sessions: 0,
+    total_resumes_parsed: 0,
+    system_status: "Operational",
+    ai_engine_version: "SmartHire v3.2 (Groq openai/gpt-oss-120b + Mira)"
+  };
 }

@@ -51,6 +51,9 @@ class AnswerSubmissionRequest(BaseModel):
     eye_contact_ratio: Optional[float] = 0.85
     words_per_minute: Optional[float] = 130.0
 
+class FinishInterviewRequest(BaseModel):
+    reason: Optional[str] = "completed" # completed, ended_by_candidate
+
 class AssessmentReport(BaseModel):
     session_id: int
     communication_score: float

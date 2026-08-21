@@ -1,127 +1,172 @@
-import random
-from typing import List, Dict
+import logging
+from typing import List, Dict, Optional
+from services.llm_service import generate_llm_questions, is_llm_available
 
-QUESTION_BANK = {
-    "Technical": {
-        "Easy": [
-            {
-                "q": "What is the difference between synchronous and asynchronous programming in Python/JavaScript?",
-                "a": "Synchronous execution blocks the main thread until a task finishes, while asynchronous execution allows non-blocking operations by running long-running tasks in the background using event loops or promises."
-            },
-            {
-                "q": "Can you explain the main principles of Object-Oriented Programming (OOP)?",
-                "a": "The 4 core OOP principles are Encapsulation (bundling data and methods), Abstraction (hiding implementation complexity), Inheritance (reusing parent class attributes), and Polymorphism (redefining methods across subclasses)."
-            },
-            {
-                "q": "What are REST APIs and what are the standard HTTP methods used?",
-                "a": "REST (Representational State Transfer) is an architectural style for web services. Standard HTTP methods include GET (read data), POST (create resource), PUT/PATCH (update resource), and DELETE (remove resource)."
-            },
-            {
-                "q": "Explain the difference between SQL relational databases and NoSQL databases.",
-                "a": "SQL databases are relational, table-based with fixed schemas (e.g., PostgreSQL), ideal for structured ACID transactions. NoSQL databases (e.g., MongoDB) are document or key-value based, optimized for flexible scaling."
-            },
-            {
-                "q": "How does Git version control work, and what is the difference between git fetch and git pull?",
-                "a": "Git tracks changes in code history. 'git fetch' downloads new commits from remote repository without merging them into your local branch, whereas 'git pull' fetches and automatically merges changes."
-            }
-        ],
-        "Medium": [
-            {
-                "q": "Explain how you would design a scalable backend for a Full Stack application handling asynchronous events.",
-                "a": "I would use a decoupled microservices architecture with a FastAPI or Node.js gateway, an asynchronous message queue like Redis or RabbitMQ for event distribution, and scalable worker instances to handle heavy background processing."
-            },
-            {
-                "q": "Explain how JWT (JSON Web Token) authentication works end-to-end.",
-                "a": "The client sends login credentials to the server. Upon authentication, the server generates a digitally signed JWT token containing user payload and sends it back. The client attaches this token in HTTP Authorization headers for subsequent protected requests."
-            },
-            {
-                "q": "What is state management in React, and when would you use Context API vs Redux?",
-                "a": "React state holds component data. Context API is built-in and best for lightweight global state like themes or user sessions. Redux is preferred for complex enterprise applications with frequent state updates and strict time-travel debugging requirements."
-            },
-            {
-                "q": "How would you optimize a database query that is taking too long to execute?",
-                "a": "I analyze the query execution plan using EXPLAIN ANALYZE, add indexes on frequently filtered or joined columns, eliminate N+1 queries using eager loading, and implement Redis caching for high-read endpoints."
-            }
-        ],
-        "Hard": [
-            {
-                "q": "How would you design a rate-limiting system for a high-traffic REST API backend?",
-                "a": "I would implement a Token Bucket or Sliding Window Log algorithm backed by Redis in-memory storage at the API Gateway layer to track request rates per IP or API key with sub-millisecond latency."
-            },
-            {
-                "q": "How do you ensure data consistency across distributed database systems using the CAP theorem?",
-                "a": "According to CAP theorem, a distributed system can only guarantee 2 of Consistency, Availability, and Partition Tolerance. In financial transactions, I prioritize Consistency using 2-Phase Commit (2PC) or Saga patterns."
-            }
-        ]
-    },
-    "HR": {
-        "Easy": [
-            {
-                "q": "Tell me about yourself and your professional background.",
-                "a": "I am a dedicated software developer passionate about building scalable full-stack applications and AI platforms. I have hands-on experience in Python, React, database engineering, and REST API design."
-            },
-            {
-                "q": "Why do you want to join our organization as a candidate?",
-                "a": "I am inspired by your company's commitment to technology innovation. My technical skills in full-stack web development and AI system engineering align closely with your team's upcoming product goals."
-            },
-            {
-                "q": "What are your greatest strengths and areas where you are working to improve?",
-                "a": "My key strength is analytical problem solving and fast technical learning. An area I am actively improving is public technical presentations, which I practice through mock interviews and tech team discussions."
-            }
-        ],
-        "Medium": [
-            {
-                "q": "Describe a project you worked on that you are most proud of, and your exact contribution.",
-                "a": "I am most proud of building SmartHire AI, an AI candidate assessment platform. I designed the FastAPI backend, integrated Speech-to-Text and MediaPipe vision telemetry, and implemented the weighted scoring rubric."
-            },
-            {
-                "q": "Describe a situation where a technical deployment failed in production. How did you diagnose and resolve it?",
-                "a": "I diagnosed the issue by checking server logs and error stack traces, identified a database pool connection leak, applied a hotfix patch to close unhandled connections, and restored system operations with zero data loss."
-            }
-        ]
-    },
-    "Behavioral": {
-        "Medium": [
-            {
-                "q": "Give an example of a situation where you had to lead a project or initiative.",
-                "a": "When leading a team project, I organized daily standups, defined clear module ownership, established Git workflow standards, and ensured on-time delivery while maintaining clean code architecture."
-            },
-            {
-                "q": "Describe a scenario where you failed to meet a target. What did you learn?",
-                "a": "Earlier in a sprint, I underestimated the time needed for third-party API integration. I learned to include buffer estimations and communicate potential blockers to stakeholders early in planning."
-            }
-        ]
-    },
-    "Aptitude": {
-        "Medium": [
-            {
-                "q": "If 5 servers process 500 requests in 5 minutes, how many servers are needed to process 2,000 requests in 10 minutes?",
-                "a": "One server processes 100 requests in 5 minutes (20 requests per minute). To process 2,000 requests in 10 minutes, we need 200 requests per minute. Therefore, 10 servers are needed (200 / 20 = 10)."
-            },
-            {
-                "q": "In a system with 99.9% uptime requirement, how many minutes of downtime are allowed per year?",
-                "a": "A year has 525,600 minutes. 99.9% uptime means 0.1% downtime is allowed. 0.1% of 525,600 = 525.6 minutes (approx 8.76 hours) of downtime allowed per year."
-            }
-        ]
-    }
+logger = logging.getLogger(__name__)
+
+FALLBACK_QUESTIONS_BANK = {
+    "Python Developer": [
+        {
+            "question_text": "Could you explain how Python manages memory internally, specifically focusing on reference counting and garbage collection for cyclical references?",
+            "sample_answer": "Python uses reference counting as its primary memory management mechanism along with a generational garbage collector to detect and sweep reference cycles.",
+            "skill_focus": "Python Memory & Garbage Collection"
+        },
+        {
+            "question_text": "Suppose your FastAPI application receives thousands of concurrent requests and database connection pool latency spikes. How would you diagnose and optimize this bottleneck?",
+            "sample_answer": "Analyze async endpoint execution, ensure DB queries do not block event loop, adjust connection pool size, and introduce async caching layer like Redis.",
+            "skill_focus": "FastAPI Async Performance"
+        },
+        {
+            "question_text": "How do Python generators and iterators differ from standard lists in terms of memory efficiency and execution flow during large data streaming?",
+            "sample_answer": "Generators evaluate values lazily on-demand using yield, maintaining O(1) memory complexity compared to loading full datasets into list memory.",
+            "skill_focus": "Generators & Iterators"
+        },
+        {
+            "question_text": "In a distributed Python microservices architecture, how do you handle structured logging, error propagation, and central telemetry tracking across services?",
+            "sample_answer": "Use correlation IDs in request headers, format logs as structured JSON, and stream metrics to centralized APM platforms like OpenTelemetry.",
+            "skill_focus": "Distributed Logging & Microservices"
+        },
+        {
+            "question_text": "Explain the Python Global Interpreter Lock (GIL) and how it affects multi-threaded vs multi-process execution for CPU-bound tasks.",
+            "sample_answer": "The GIL prevents multi-threaded CPython from executing bytecode on multiple CPU cores simultaneously; multiprocessing bypasses this with separate memory spaces.",
+            "skill_focus": "Python Concurrency & GIL"
+        },
+        {
+            "question_text": "How do you implement custom Python decorators to handle authentication, rate limiting, and execution logging cleanly across API endpoints?",
+            "sample_answer": "Use functools.wraps to preserve wrapper metadata and execute pre/post logic around decorated callables.",
+            "skill_focus": "Decorators & Metaprogramming"
+        },
+        {
+            "question_text": "How do you approach database schema migrations in production Python projects using Alembic or Django ORM without causing table locks?",
+            "sample_answer": "Perform non-breaking additive migrations, create indexes concurrently, and execute field deprecations in multi-stage releases.",
+            "skill_focus": "Database Migrations"
+        },
+        {
+            "question_text": "Describe how you optimize Pydantic data validation and serialization overhead in high-performance FastAPI microservices.",
+            "sample_answer": "Utilize Pydantic V2 Rust-backed core validators, reduce nested schema parsing, and leverage direct ORM serialization.",
+            "skill_focus": "FastAPI & Pydantic Optimization"
+        },
+        {
+            "question_text": "What strategies do you use for dependency injection, test mocking, and isolating external HTTP services during pytest unit testing?",
+            "sample_answer": "Use pytest fixtures, dependency overrides in FastAPI, and mock HTTP transport layers with httpx-mock or unittest.mock.",
+            "skill_focus": "Testing & Mocking"
+        }
+    ],
+    "Backend Engineering": [
+        {
+            "question_text": "When designing a RESTful API for high throughput, how do you approach database indexing, caching strategies, and connection pooling?",
+            "sample_answer": "Use composite indexes on query fields, cache frequent reads with Redis, and configure connection pools to match worker concurrency.",
+            "skill_focus": "API Architecture & Caching"
+        },
+        {
+            "question_text": "How do you maintain data consistency across microservices without resorting to monolithic distributed transactions?",
+            "sample_answer": "Implement saga patterns (orchestration/choreography) or transactional outbox with event-driven messaging.",
+            "skill_focus": "Microservices Consistency & Saga"
+        },
+        {
+            "question_text": "Explain how database indexing strategies (B-Trees vs Hash indexes) impact query execution plans for read-heavy versus write-heavy workloads.",
+            "sample_answer": "B-Tree indexes optimize range queries and sorting at cost of write amplification; Hash indexes provide O(1) exact equality lookups.",
+            "skill_focus": "Database Indexing & Query Plans"
+        },
+        {
+            "question_text": "Suppose an external API integrated with your backend experiences intermittent failures. How would you implement circuit breakers and retries safely?",
+            "sample_answer": "Wrap external calls in circuit breaker state machines with exponential backoff and jitter to avoid thundering herd problem.",
+            "skill_focus": "Resilience & Circuit Breaker"
+        }
+    ]
 }
 
-def generate_interview_questions(category: str, difficulty: str, domain: str, num_questions: int = 5, skills: List[str] = None) -> List[Dict]:
-    cat_pool = QUESTION_BANK.get(category, QUESTION_BANK["Technical"])
-    diff_pool = cat_pool.get(difficulty, list(cat_pool.values())[0])
+def get_fallback_questions(domain: str, tech_count: int) -> List[Dict]:
+    pool = FALLBACK_QUESTIONS_BANK.get(domain, FALLBACK_QUESTIONS_BANK["Python Developer"])
+    res = []
+    for i in range(tech_count):
+        item = dict(pool[i % len(pool)])
+        item["id"] = i + 2
+        res.append(item)
+    return res
 
-    selected = random.sample(diff_pool, min(num_questions, len(diff_pool)))
+def generate_interview_questions(
+    category: str,
+    difficulty: str,
+    domain: str,
+    num_questions: int = 5,
+    skills: Optional[List[str]] = None,
+    previous_questions: Optional[List[str]] = None
+) -> List[Dict]:
+    """
+    Dynamic Question Generator:
+    Begins naturally with a welcoming self-introduction prompt from Mira (Q1).
+    Subsequent questions are dynamically generated via Groq LLM (openai/gpt-oss-120b)
+    matching the exact configured question count (num_questions).
+    """
+    intro_question = {
+        "id": 1,
+        "question_text": f"Welcome! I'm Mira, your AI technical interviewer today. To get started, could you briefly introduce yourself and highlight your experience relevant to the {domain} role?",
+        "sample_answer": "Brief candidate self-introduction highlighting technical background and key project experience.",
+        "skill_focus": "Self Introduction & Background"
+    }
 
-    result = []
-    for i, item in enumerate(selected):
-        skill_tag = skills[i % len(skills)] if skills else domain
-        result.append({
-            "id": i + 1,
-            "category": category,
-            "difficulty": difficulty,
-            "domain": domain,
-            "skill_focus": skill_tag,
-            "question_text": item["q"],
-            "sample_answer": item["a"]
-        })
-    return result
+    tech_count = max(num_questions - 1, 1)
+    llm_questions = None
+
+    if is_llm_available():
+        try:
+            llm_questions = generate_llm_questions(
+                domain=domain,
+                difficulty=difficulty,
+                num_questions=tech_count,
+                skills=skills,
+                previous_questions=(previous_questions or []) + [intro_question["question_text"]]
+            )
+        except Exception as err:
+            logger.error("Exception in generate_llm_questions: %s", err)
+            llm_questions = None
+
+    if not llm_questions or len(llm_questions) < tech_count:
+        logger.info("Supplementing with domain fallback questions for %s (%s)", domain, difficulty)
+        fallback = get_fallback_questions(domain, tech_count)
+        if not llm_questions:
+            llm_questions = fallback
+        else:
+            needed = tech_count - len(llm_questions)
+            llm_questions.extend(fallback[:needed])
+
+    for idx, q in enumerate(llm_questions):
+        q["id"] = idx + 2
+
+    all_questions = [intro_question] + llm_questions
+    return all_questions[:num_questions]
+
+def generate_adaptive_followup_question(
+    domain: str,
+    difficulty: str,
+    skills: Optional[List[str]] = None,
+    previous_questions: Optional[List[str]] = None,
+    candidate_answer: Optional[str] = ""
+) -> Dict:
+    """
+    Generates a single follow-up technical question dynamically via Groq LLM or domain fallback bank.
+    Guaranteed to return a valid question dictionary.
+    """
+    fallback_pool = get_fallback_questions(domain, 10)
+
+    if is_llm_available():
+        try:
+            llm_questions = generate_llm_questions(
+                domain=domain,
+                difficulty=difficulty,
+                num_questions=1,
+                skills=skills,
+                previous_questions=previous_questions or []
+            )
+            if llm_questions and len(llm_questions) > 0 and llm_questions[0].get("question_text"):
+                return llm_questions[0]
+        except Exception as err:
+            logger.error("Exception in generate_adaptive_followup_question LLM: %s", err)
+
+    prev_set = set(p.lower().strip() for p in (previous_questions or []))
+    for item in fallback_pool:
+        if item["question_text"].lower().strip() not in prev_set:
+            return item
+
+    return fallback_pool[0]

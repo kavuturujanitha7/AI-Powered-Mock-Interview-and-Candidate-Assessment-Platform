@@ -1,10 +1,39 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera } from 'lucide-react';
+import { Camera, AlertCircle } from 'lucide-react';
+import * as faceapi from 'face-api.js';
 
-export default function WebcamMonitor({ onMetricsUpdate, onMalpracticeDetected }) {
+export default function WebcamMonitor({ onMetricsUpdate }) {
   const videoRef = useRef(null);
   const [streamActive, setStreamActive] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+
+  const onMetricsUpdateRef = useRef(onMetricsUpdate);
+  useEffect(() => {
+    onMetricsUpdateRef.current = onMetricsUpdate;
+  }, [onMetricsUpdate]);
+
+  // Load face-api.js neural net models from /models directory
+  useEffect(() => {
+    let isMounted = true;
+    const loadModels = async () => {
+      try {
+        const MODEL_URL = '/models';
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+        ]);
+        if (isMounted) {
+          setModelsLoaded(true);
+        }
+      } catch (err) {
+        console.warn("[face-api.js] Model loading exception:", err);
+      }
+    };
+    loadModels();
+    return () => { isMounted = false; };
+  }, []);
 
   const startCamera = async () => {
     try {
@@ -19,7 +48,7 @@ export default function WebcamMonitor({ onMetricsUpdate, onMalpracticeDetected }
         setStreamActive(true);
       }
     } catch (err) {
-      console.warn("Webcam access error / fallback mode:", err);
+      console.warn("Webcam access error:", err);
       setPermissionDenied(true);
       setStreamActive(false);
     }
@@ -28,54 +57,112 @@ export default function WebcamMonitor({ onMetricsUpdate, onMalpracticeDetected }
   useEffect(() => {
     startCamera();
 
-    let checkCounter = 0;
-
-    // ACTIVE PROCTORING VISION TELEMETRY
-    const interval = setInterval(() => {
-      checkCounter++;
-
-      // Simulate dynamic gaze and posture metrics
-      const dynamicEyePct = Math.min(100, Math.max(60, Math.floor(88 + (Math.random() * 16 - 8))));
-      const dynamicAttentionPct = Math.min(100, Math.max(70, Math.floor(94 + (Math.random() * 10 - 5))));
-      const dynamicConfidencePct = Math.min(100, Math.max(65, Math.floor(84 + (Math.random() * 14 - 7))));
-      const dynamicPresencePct = Math.min(100, Math.max(85, Math.floor(96 + (Math.random() * 6 - 3))));
-
-      const emotions = ['Focused & Confident', 'Attentive & Calm', 'Composed & Ready', 'Analytical & Engaged'];
-      const currentEmo = emotions[Math.floor(Math.random() * emotions.length)];
-
-      if (onMetricsUpdate) {
-        onMetricsUpdate({
-          eyeContactRatio: dynamicEyePct / 100.0,
-          eyeContactPct: dynamicEyePct,
-          attentionPct: dynamicAttentionPct,
-          confidencePct: dynamicConfidencePct,
-          presencePct: dynamicPresencePct,
-          emotion: currentEmo
-        });
-      }
-
-      // Trigger vision malpractice signal if candidate gaze drops sharply or periodically turns away
-      if (checkCounter % 14 === 0 && onMalpracticeDetected) {
-        onMalpracticeDetected({
-          type: 'VISION_LOOKING_AWAY_OR_PHONE',
-          reason: 'Phone/Device Detected or Gaze Deviation Away from Camera'
-        });
-      }
-
-    }, 1000);
-
     return () => {
-      clearInterval(interval);
       if (videoRef.current && videoRef.current.srcObject) {
         videoRef.current.srcObject.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
 
+  // Face detection interval effect — strictly depends on stable booleans [streamActive, modelsLoaded] to prevent infinite render loops
+  useEffect(() => {
+    if (!streamActive || !modelsLoaded) {
+      if (onMetricsUpdateRef.current) {
+        onMetricsUpdateRef.current({
+          streamActive,
+          faceDetected: streamActive ? "Initializing Models..." : "Not Detected",
+          eyeContactRatio: 0.0,
+          eyeContactPct: 0,
+          attentionPct: 0,
+          confidencePct: 0,
+          emotion: "Neutral",
+          cameraStatus: streamActive ? "Loading Neural Models..." : (permissionDenied ? "Permission Denied" : "Initializing Camera...")
+        });
+      }
+      return;
+    }
+
+    const intervalId = setInterval(async () => {
+      if (!videoRef.current || videoRef.current.paused || videoRef.current.ended) return;
+
+      try {
+        const detection = await faceapi
+          .detectSingleFace(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
+          .withFaceLandmarks()
+          .withFaceExpressions();
+
+        if (detection) {
+          const box = detection.detection.box;
+          const score = detection.detection.score;
+
+          // 1. Extract Dominant Expression
+          const expressions = detection.expressions;
+          let dominantEmotion = "neutral";
+          let maxScore = 0;
+          if (expressions) {
+            Object.entries(expressions).forEach(([expr, val]) => {
+              if (val > maxScore) {
+                maxScore = val;
+                dominantEmotion = expr;
+              }
+            });
+          }
+          const emotionLabel = dominantEmotion.charAt(0).toUpperCase() + dominantEmotion.slice(1);
+
+          // 2. Compute Eye Contact & Gaze Alignment Heuristic
+          // Nose tip landmark (point 30) relative to bounding box center
+          const landmarks = detection.landmarks;
+          const nose = landmarks.getNose()[3]; // Tip of nose
+          
+          const boxCenterX = box.x + (box.width / 2);
+          const devX = Math.abs(nose.x - boxCenterX) / (box.width / 2); // 0 when nose is centered horizontally
+          
+          const rawEyeContact = Math.max(0, 1.0 - (devX * 1.8));
+          const eyeContactPct = Math.round(rawEyeContact * 100);
+          const eyeContactRatio = Math.round(rawEyeContact * 100) / 100;
+
+          // 3. Attention & Confidence Percentages
+          const attentionPct = Math.min(100, Math.round((eyeContactPct * 0.7) + (score * 30)));
+          const confidencePct = Math.round(score * 100);
+
+          if (onMetricsUpdateRef.current) {
+            onMetricsUpdateRef.current({
+              streamActive: true,
+              faceDetected: "Face Detected",
+              eyeContactRatio,
+              eyeContactPct,
+              attentionPct,
+              confidencePct,
+              emotion: emotionLabel,
+              cameraStatus: "AI Eye-Contact & Emotion Tracking Active"
+            });
+          }
+        } else {
+          if (onMetricsUpdateRef.current) {
+            onMetricsUpdateRef.current({
+              streamActive: true,
+              faceDetected: "Searching Face...",
+              eyeContactRatio: 0.0,
+              eyeContactPct: 0,
+              attentionPct: 0,
+              confidencePct: 0,
+              emotion: "Searching",
+              cameraStatus: "Camera Stream Active (Searching Face...)"
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Face detection processing error:", err);
+      }
+    }, 700);
+
+    return () => clearInterval(intervalId);
+  }, [streamActive, modelsLoaded]);
+
   return (
     <div className="relative rounded-2xl overflow-hidden glass-card border border-slate-800 bg-slate-950 aspect-video shadow-2xl group">
       
-      {/* Clean Unobstructed Video Stream */}
+      {/* Clean Video Stream */}
       <video 
         ref={videoRef} 
         autoPlay 
@@ -84,19 +171,19 @@ export default function WebcamMonitor({ onMetricsUpdate, onMalpracticeDetected }
         className={`w-full h-full object-cover transform -scale-x-100 ${streamActive ? 'block' : 'hidden'}`}
       />
 
-      {/* Fallback View if Camera Permission Pending */}
+      {/* Fallback View if Camera Permission Pending / Denied */}
       {!streamActive && (
         <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900/95 relative p-6 text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 animate-pulse">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
             <Camera className="w-8 h-8" />
           </div>
           
           <div>
-            <p className="text-sm font-bold text-white">Live Camera Preview</p>
+            <p className="text-sm font-bold text-white">Live Camera Stream</p>
             <p className="text-xs text-slate-400 max-w-xs mt-1">
               {permissionDenied 
-                ? "Camera permission requested. Click below to allow camera access." 
-                : "Initializing Live Webcam Stream..."}
+                ? "Camera permission denied or camera device unavailable. Click below to retry camera access." 
+                : "Initializing Live Webcam Stream & AI Models..."}
             </p>
           </div>
 
@@ -110,9 +197,9 @@ export default function WebcamMonitor({ onMetricsUpdate, onMalpracticeDetected }
       )}
 
       {/* Camera Live Indicator */}
-      <div className="absolute top-3 left-3 bg-red-500/90 backdrop-blur px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold text-white uppercase tracking-wider shadow-md flex items-center gap-1.5">
-        <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
-        ON SCREEN
+      <div className="absolute top-3 left-3 bg-slate-900/90 backdrop-blur px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold text-white uppercase tracking-wider shadow-md flex items-center gap-1.5 border border-slate-800">
+        <span className={`w-2 h-2 rounded-full ${streamActive ? 'bg-emerald-400 animate-ping' : 'bg-red-500'}`}></span>
+        {streamActive ? "CAMERA LIVE" : "CAMERA OFF"}
       </div>
 
     </div>
